@@ -45,18 +45,27 @@ Aplikasi web profesional berbasis Django untuk manajemen inventaris kantor dan i
    pip install -r requirements.txt
    ```
 
-3. **Migrasi Database**:
+3. **Migrasi Database & Inisialisasi Data Demo**:
    ```bash
-   python manage.py makemigrations accounts inventory loans consumables reports audit
    python manage.py migrate
+   python manage.py init_data
    ```
 
-4. **Jalankan Pengujian Otomatis**:
+   *Perintah `init_data` secara otomatis mengisi pengaturan instansi BMKG, akun pengguna (admin & pegawai), master barang & kategori, saldo awal stok, serta contoh transaksi aktif.*
+
+4. **Kredensial Pengujian (Demo)**:
+   - **Administrator**: `admin` / `admin123`
+   - **Petugas Gudang**: `petugas` / `petugas123`
+   - **Pegawai 1**: `pegawai_andi` / `pegawai123`
+   - **Pegawai 2**: `pegawai_budi` / `pegawai123`
+   - **Pegawai 3**: `pegawai_citra` / `pegawai123`
+
+5. **Jalankan Pengujian Otomatis**:
    ```bash
    python manage.py test
    ```
 
-5. **Jalankan Server Pengembangan**:
+6. **Jalankan Server Pengembangan**:
    ```bash
    python manage.py runserver
    ```
