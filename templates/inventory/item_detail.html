@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}Detail Barang: {{ item.name }} - SIP3B BMKG{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge {% if item.item_type == 'LOANABLE' %}bg-primary{% else %}bg-success{% endif %}">
+                    {{ item.get_item_type_display }}
+                </span>
+                <h3 class="fw-bold mb-0">{{ item.name }}</h3>
+            </div>
+            <p class="text-muted small mb-0">Kode Barang: <strong>{{ item.code }}</strong> &bull; Kategori: <strong>{{ item.category.name }}</strong></p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'inventory:item_edit' item.pk %}" class="btn btn-outline-primary">
+                <i class="bi bi-pencil me-1"></i>Ubah
+            </a>
+            <a href="{% url 'inventory:item_adjust_stock' item.pk %}" class="btn btn-outline-secondary">
+                <i class="bi bi-sliders me-1"></i>Koreksi Stok
+            </a>
+            <a href="{% url 'inventory:item_list' %}" class="btn btn-light border">
+                <i class="bi bi-arrow-left me-1"></i>Kembali
+            </a>
+        </div>
+    </div>
+
+    <!-- Rincian Saldo Stok -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-6 col-md-3">
+            <div class="card shadow-sm border-start border-success border-4">
+                <div class="card-body">
+                    <small class="text-muted text-uppercase fw-semibold">Stok Tersedia (Gudang)</small>
+                    <h2 class="fw-bold mb-0 text-success">{{ item.stock_available }} <small class="fs-6 fw-normal text-muted">{{ item.unit }}</small></h2>
+                    <small class="text-muted">Siap untuk dipinjam / diserahkan</small>
+                </div>
+            </div>
+        </div>
+
+        {% if item.item_type == 'LOANABLE' %}
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="card shadow-sm border-start border-info border-4">
+                    <div class="card-body">
+                        <small class="text-muted text-uppercase fw-semibold">Stok Sedang Dipinjam</small>
+                        <h2 class="fw-bold mb-0 text-info">{{ item.stock_loaned }} <small class="fs-6 fw-normal text-muted">{{ item.unit }}</small></h2>
+                        <small class="text-muted">Sedang digunakan pegawai</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="card shadow-sm border-start border-danger border-4">
+                    <div class="card-body">
+                        <small class="text-muted text-uppercase fw-semibold">Stok Rusak / Hilang</small>
+                        <h2 class="fw-bold mb-0 text-danger">{{ item.stock_damaged|add:item.stock_lost }} <small class="fs-6 fw-normal text-muted">{{ item.unit }}</small></h2>
+                        <small class="text-muted">Rusak: {{ item.stock_damaged }} | Hilang: {{ item.stock_lost }}</small>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="col-12 col-sm-6 col-md-3">
+            <div class="card shadow-sm border-start border-secondary border-4">
+                <div class="card-body">
+                    <small class="text-muted text-uppercase fw-semibold">Total Aset Tercatat</small>
+                    <h2 class="fw-bold mb-0 text-secondary">{{ item.total_stock }} <small class="fs-6 fw-normal text-muted">{{ item.unit }}</small></h2>
+                    <small class="text-muted">Batas Minimum: {{ item.minimum_stock }} {{ item.unit }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informasi Tambahan -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="card-title mb-0 fw-bold"><i class="bi bi-info-circle me-2 text-primary"></i>Informasi Spesifikasi & Lokasi</h5>
+        </div>
+        <div class="card-body p-4">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <small class="text-muted d-block">Merek / Model</small>
+                    <span class="fw-semibold">{{ item.brand|default:"-" }}</span>
+                </div>
+                <div class="col-md-4">
+                    <small class="text-muted d-block">Lokasi Penyimpanan</small>
+                    <span class="fw-semibold">{{ item.location.name|default:"-" }}</span>
+                </div>
+                <div class="col-md-4">
+                    <small class="text-muted d-block">Status</small>
+                    {% if item.is_active %}<span class="badge bg-success">Aktif</span>{% else %}<span class="badge bg-secondary">Nonaktif</span>{% endif %}
+                </div>
+                <div class="col-12">
+                    <small class="text-muted d-block">Deskripsi Teknis</small>
+                    <p class="mb-0 text-dark">{{ item.description|default:"Tidak ada keterangan tambahan."|linebreaks }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Riwayat Mutasi Stok Terbaru -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0 fw-bold"><i class="bi bi-journal-text me-2 text-primary"></i>Riwayat Mutasi Stok Terbaru</h5>
+            <a href="{% url 'inventory:stock_ledger' %}?q={{ item.code }}" class="btn btn-sm btn-outline-primary">
+                Lihat Semua Ledger
+            </a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3" style="width: 160px;">Waktu</th>
+                        <th>Jenis Mutasi</th>
+                        <th>Jumlah</th>
+                        <th>Saldo Sesudah</th>
+                        <th>Referensi</th>
+                        <th>Petugas</th>
+                        <th class="pe-3">Alasan / Catatan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in movements %}
+                        <tr>
+                            <td class="ps-3 text-muted small">{{ m.created_at|date:"d M Y H:i" }}</td>
+                            <td><span class="badge bg-light text-dark border">{{ m.get_movement_type_display }}</span></td>
+                            <td class="fw-bold">{{ m.quantity }} {{ item.unit }}</td>
+                            <td><span class="fw-semibold text-success">{{ m.stock_available_after }}</span> (Gudang)</td>
+                            <td><code>{{ m.reference_number|default:"-" }}</code></td>
+                            <td><small>{{ m.created_by.display_name|default:"Sistem" }}</small></td>
+                            <td class="pe-3 small text-muted">{{ m.reason }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">Belum ada riwayat mutasi stok untuk barang ini.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

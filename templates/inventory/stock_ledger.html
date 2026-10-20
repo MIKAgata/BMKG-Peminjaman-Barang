@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}Buku Mutasi Stok - SIP3B BMKG{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h3 class="fw-bold mb-1">Buku Mutasi Stok (Stock Ledger)</h3>
+            <p class="text-muted small mb-0">Catatan audit riwayat setiap penambahan, peminjaman, pengembalian, dan penyerahan barang</p>
+        </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-3">
+            <form method="get" class="row g-2 align-items-center">
+                <div class="col-12 col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Cari nama barang, kode, atau nomor referensi...">
+                    </div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <select name="movement_type" class="form-select">
+                        <option value="">-- Semua Jenis Mutasi --</option>
+                        {% for m_code, m_label in movement_types %}
+                            <option value="{{ m_code }}" {% if movement_type == m_code %}selected{% endif %}>{{ m_label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">Filter</button>
+                    {% if query or movement_type %}
+                        <a href="{% url 'inventory:stock_ledger' %}" class="btn btn-outline-secondary" title="Reset filter"><i class="bi bi-x-circle"></i></a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabel Ledger -->
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3" style="width: 160px;">Waktu Mutasi</th>
+                        <th>Barang</th>
+                        <th>Jenis Mutasi</th>
+                        <th class="text-center">Jumlah</th>
+                        <th class="text-center">Stok Gudang Sebelum &rarr; Sesudah</th>
+                        <th class="text-center">Stok Pinjam Sesudah</th>
+                        <th>Referensi</th>
+                        <th>Petugas</th>
+                        <th class="pe-3">Alasan / Catatan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in page_obj %}
+                        <tr>
+                            <td class="ps-3 text-muted small">{{ m.created_at|date:"d M Y H:i:s" }}</td>
+                            <td>
+                                <a href="{% url 'inventory:item_detail' m.item.pk %}" class="fw-semibold text-primary text-decoration-none">
+                                    {{ m.item.name }}
+                                </a>
+                                <small class="text-muted d-block">{{ m.item.code }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border px-2 py-1">
+                                    {{ m.get_movement_type_display }}
+                                </span>
+                            </td>
+                            <td class="text-center fw-bold">{{ m.quantity }} {{ m.item.unit }}</td>
+                            <td class="text-center">
+                                <span class="text-muted">{{ m.stock_available_before }}</span>
+                                <span class="mx-1 text-primary">&rarr;</span>
+                                <span class="fw-bold text-success">{{ m.stock_available_after }}</span>
+                            </td>
+                            <td class="text-center text-info fw-semibold">{{ m.stock_loaned_after }}</td>
+                            <td><code>{{ m.reference_number|default:"-" }}</code></td>
+                            <td><small>{{ m.created_by.display_name|default:"Sistem" }}</small></td>
+                            <td class="pe-3 small text-muted">{{ m.reason }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center py-4 text-muted">
+                                <i class="bi bi-journal-x display-6 d-block mb-2 text-secondary"></i>
+                                Belum ada catatan mutasi stok.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+            <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+                <small class="text-muted">Menampilkan {{ page_obj.start_index }} - {{ page_obj.end_index }} dari {{ page_obj.paginator.count }} catatan</small>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ query }}&movement_type={{ movement_type }}">Sebelumnya</a></li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">Sebelumnya</span></li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                                <a class="page-link" href="?page={{ num }}&q={{ query }}&movement_type={{ movement_type }}">{{ num }}</a>
+                            </li>
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ query }}&movement_type={{ movement_type }}">Berikutnya</a></li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">Berikutnya</span></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

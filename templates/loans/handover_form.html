@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Serah Terima Fisik: {{ loan.loan_number }} - SIP3B BMKG{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-10">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0 fw-bold"><i class="bi bi-box-arrow-up-right me-2 text-success"></i>Pencatatan Serah Terima Fisik Barang Pinjaman</h5>
+                    <a href="{% url 'loans:loan_detail' loan.pk %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Batal
+                    </a>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-light border mb-4">
+                        <div class="row g-2">
+                            <div class="col-sm-6">
+                                <small class="text-muted d-block">Nomor Peminjaman</small>
+                                <strong class="text-primary">{{ loan.loan_number }}</strong>
+                            </div>
+                            <div class="col-sm-6">
+                                <small class="text-muted d-block">Pegawai Penerima</small>
+                                <strong>{{ loan.borrower.display_name }} ({{ loan.borrower.department|default:"BMKG" }})</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+
+                        <h6 class="fw-bold mb-3 text-dark">Barang yang Akan Diberikan Secara Fisik:</h6>
+                        <div class="table-responsive mb-4">
+                            <table class="table table-bordered align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Nama Barang Pinjaman</th>
+                                        <th class="text-center" style="width: 140px;">Stok Tersedia di Gudang</th>
+                                        <th class="text-center" style="width: 130px;">Sisa Permohonan</th>
+                                        <th style="width: 150px;">Jumlah Serah Fisik</th>
+                                        <th style="width: 220px;">Kondisi Fisik Saat Keluar</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in pending_items %}
+                                        <tr>
+                                            <td>
+                                                <strong class="text-dark">{{ item.item.name }}</strong>
+                                                <small class="text-muted d-block">Kode: {{ item.item.code }}</small>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="fw-bold {% if item.item.stock_available < item.quantity_remaining_to_handover %}text-danger{% else %}text-success{% endif %}">
+                                                    {{ item.item.stock_available }} {{ item.item.unit }}
+                                                </span>
+                                            </td>
+                                            <td class="text-center fw-semibold text-primary">
+                                                {{ item.quantity_remaining_to_handover }} {{ item.item.unit }}
+                                            </td>
+                                            <td>
+                                                <input type="number" name="qty_{{ item.id }}" class="form-control" 
+                                                       value="{{ item.quantity_remaining_to_handover }}" 
+                                                       min="0" max="{{ item.quantity_remaining_to_handover }}" required>
+                                            </td>
+                                            <td>
+                                                <select name="cond_{{ item.id }}" class="form-select">
+                                                    <option value="Baik / Layak Pakai" selected>Baik / Layak Pakai</option>
+                                                    <option value="Berfungsi Baik (Ada Baret Halus)">Berfungsi Baik (Baret Halus)</option>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="notes" class="form-label fw-semibold">Catatan Serah Terima (Opsional)</label>
+                            <textarea name="notes" id="notes" class="form-control" rows="2" placeholder="Nomor seri barang, kelengkapan kabel, tas charger, dsb."></textarea>
+                        </div>
+
+                        <div class="alert alert-warning-subtle text-dark border border-warning-subtle small mb-4">
+                            <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>
+                            <strong>Peringatan Mutasi Stok:</strong> Mengonfirmasi formulir ini akan memotong saldo stok tersedia di gudang secara atomik dan mencatat transaksi serah terima resmi.
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+                            <a href="{% url 'loans:loan_detail' loan.pk %}" class="btn btn-outline-secondary">Kembali</a>
+                            <button type="submit" class="btn btn-success px-4 fw-semibold shadow-sm">
+                                <i class="bi bi-check2-circle me-1"></i>Konfirmasi Serah Terima Fisik
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Rekapitulasi dan Laporan - SIP3B BMKG{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">Rekapitulasi dan Laporan Terpadu</h3>
+            <p class="text-muted small mb-0">Pusat laporan peminjaman, pengembalian, penyerahan habis pakai, dan saldo inventaris</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Laporan Peminjaman -->
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card shadow-sm h-100 border-top border-primary border-3">
+                <div class="card-body p-4 d-flex flex-column">
+                    <div class="bg-primary-subtle text-primary p-3 rounded-circle d-inline-flex mb-3" style="width: 50px; height: 50px;">
+                        <i class="bi bi-file-earmark-text fs-4"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Laporan Peminjaman</h5>
+                    <p class="text-muted small flex-grow-1">
+                        Rekapitulasi transaksi peminjaman barang per hari, bulan, dan tahun, filter status pengajuan & keterlambatan.
+                    </p>
+                    <a href="{% url 'reports:report_loans' %}" class="btn btn-outline-primary w-100">
+                        Buka Laporan <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Laporan Pengembalian -->
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card shadow-sm h-100 border-top border-warning border-3">
+                <div class="card-body p-4 d-flex flex-column">
+                    <div class="bg-warning-subtle text-warning p-3 rounded-circle d-inline-flex mb-3" style="width: 50px; height: 50px;">
+                        <i class="bi bi-arrow-return-left fs-4"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Laporan Pengembalian</h5>
+                    <p class="text-muted small flex-grow-1">
+                        Catatan penerimaan barang kembali, kondisi fisik saat kembali (layak pakai, rusak, hilang).
+                    </p>
+                    <a href="{% url 'reports:report_returns' %}" class="btn btn-outline-warning w-100">
+                        Buka Laporan <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Laporan Barang Habis Pakai -->
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card shadow-sm h-100 border-top border-success border-3">
+                <div class="card-body p-4 d-flex flex-column">
+                    <div class="bg-success-subtle text-success p-3 rounded-circle d-inline-flex mb-3" style="width: 50px; height: 50px;">
+                        <i class="bi bi-cart-check fs-4"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Laporan Habis Pakai</h5>
+                    <p class="text-muted small flex-grow-1">
+                        Rekapitulasi penyerahan ATK dan barang habis pakai berdasarkan periode dan unit kerja penerima.
+                    </p>
+                    <a href="{% url 'reports:report_consumables' %}" class="btn btn-outline-success w-100">
+                        Buka Laporan <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rekapitulasi Stok -->
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card shadow-sm h-100 border-top border-info border-3">
+                <div class="card-body p-4 d-flex flex-column">
+                    <div class="bg-info-subtle text-info p-3 rounded-circle d-inline-flex mb-3" style="width: 50px; height: 50px;">
+                        <i class="bi bi-boxes fs-4"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Rekapitulasi Stok</h5>
+                    <p class="text-muted small flex-grow-1">
+                        Saldo stok gudang, barang dipinjam, rusak, dan peringatan barang yang mendekati batas minimum.
+                    </p>
+                    <a href="{% url 'reports:report_stock' %}" class="btn btn-outline-info w-100">
+                        Buka Laporan <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

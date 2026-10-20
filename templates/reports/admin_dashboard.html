@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard Administrator - SIP3B BMKG{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h3 class="fw-bold mb-1">Dashboard Administrator / Petugas Gudang</h3>
+            <p class="text-muted small mb-0">Ringkasan inventaris aset BMN, antrean permohonan, dan transaksi serah-terima</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'loans:handover_list' %}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-box-arrow-up-right me-1"></i>Serah Terima Fisik
+            </a>
+            <a href="{% url 'consumables:handover_create' %}" class="btn btn-primary btn-sm shadow-sm">
+                <i class="bi bi-plus-lg me-1"></i>Penyerahan ATK
+            </a>
+        </div>
+    </div>
+
+    <!-- Metrik Statistik Utama -->
+    <div class="row g-3 mb-4">
+        <!-- Total Barang -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card shadow-sm border-start border-primary border-4 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem;">Total Jenis Barang</small>
+                            <h3 class="fw-bold mb-0 text-primary">{{ stats.total_items }}</h3>
+                            <small class="text-muted">Master aktif terdaftar</small>
+                        </div>
+                        <div class="bg-primary-subtle text-primary p-3 rounded-circle">
+                            <i class="bi bi-boxes fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stok Pinjaman Tersedia -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card shadow-sm border-start border-success border-4 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem;">Stok Pinjaman Gudang</small>
+                            <h3 class="fw-bold mb-0 text-success">{{ stats.loanable_available }} <small class="fs-6 fw-normal text-muted">unit</small></h3>
+                            <small class="text-muted">Sedang dipinjam: <strong>{{ stats.loanable_loaned }}</strong> unit</small>
+                        </div>
+                        <div class="bg-success-subtle text-success p-3 rounded-circle">
+                            <i class="bi bi-check2-circle fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pengajuan Menunggu -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card shadow-sm border-start border-warning border-4 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem;">Pengajuan Menunggu</small>
+                            <h3 class="fw-bold mb-0 text-warning">{{ stats.pending_loans }}</h3>
+                            <small class="text-muted"><a href="{% url 'loans:loan_request_list' %}?status=PENDING" class="text-decoration-none">Perlu ditinjau &rarr;</a></small>
+                        </div>
+                        <div class="bg-warning-subtle text-warning p-3 rounded-circle">
+                            <i class="bi bi-clock-history fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pinjaman Terlambat / Aktif -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card shadow-sm border-start border-danger border-4 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem;">Pinjaman Terlambat</small>
+                            <h3 class="fw-bold mb-0 text-danger">{{ stats.overdue_loans }}</h3>
+                            <small class="text-muted">Total aktif: <strong>{{ stats.active_loans }}</strong> transaksi</small>
+                        </div>
+                        <div class="bg-danger-subtle text-danger p-3 rounded-circle">
+                            <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- Peringatan Stok Kritis / Menipis -->
+        <div class="col-12 col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="card-title mb-0 fw-bold text-danger">
+                        <i class="bi bi-exclamation-octagon-fill me-2"></i>Peringatan Stok Minimum
+                    </h6>
+                    <a href="{% url 'inventory:item_list' %}?low_stock=1" class="small text-decoration-none">Lihat Semua</a>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        {% for item in low_stock_items %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                                <div>
+                                    <a href="{% url 'inventory:item_detail' item.pk %}" class="fw-semibold text-dark text-decoration-none d-block">
+                                        {{ item.name }}
+                                    </a>
+                                    <small class="text-muted">{{ item.code }} &bull; Batas Min: {{ item.minimum_stock }}</small>
+                                </div>
+                                <span class="badge {% if item.stock_available == 0 %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                                    {{ item.stock_available }} {{ item.unit }}
+                                </span>
+                            </li>
+                        {% empty %}
+                            <li class="list-group-item text-center py-4 text-muted small">
+                                <i class="bi bi-shield-check text-success fs-3 d-block mb-1"></i>
+                                Semua persediaan berada di atas batas minimum.
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaksi Peminjaman Terbaru -->
+        <div class="col-12 col-lg-8">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="card-title mb-0 fw-bold">
+                        <i class="bi bi-clipboard-check me-2 text-primary"></i>Pengajuan Peminjaman Terbaru
+                    </h6>
+                    <a href="{% url 'loans:loan_request_list' %}" class="small text-decoration-none">Lihat Semua &rarr;</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3">No Transaksi</th>
+                                <th>Peminjam</th>
+                                <th>Jatuh Tempo</th>
+                                <th>Status</th>
+                                <th class="text-end pe-3">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for loan in recent_loans %}
+                                <tr>
+                                    <td class="ps-3 fw-semibold">
+                                        <a href="{% url 'loans:loan_detail' loan.pk %}" class="text-decoration-none">{{ loan.loan_number }}</a>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold">{{ loan.borrower.display_name }}</div>
+                                        <small class="text-muted">{{ loan.borrower.department|default:"BMKG" }}</small>
+                                    </td>
+                                    <td>{{ loan.due_date|date:"d M Y" }}</td>
+                                    <td>
+                                        <span class="badge {% if loan.status == 'PENDING' %}bg-warning text-dark{% elif loan.status == 'APPROVED' %}bg-info text-white{% elif loan.status == 'ACTIVE' %}bg-primary{% elif loan.status == 'COMPLETED' %}bg-success{% else %}bg-secondary{% endif %}">
+                                            {{ loan.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end pe-3">
+                                        <a href="{% url 'loans:loan_detail' loan.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="5" class="text-center py-4 text-muted small">Belum ada pengajuan peminjaman.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Koreksi Stok: {{ item.name }} - SIP3B BMKG{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0 fw-bold"><i class="bi bi-sliders me-2 text-warning"></i>Koreksi / Penyesuaian Stok</h5>
+                    <a href="{% url 'inventory:item_detail' item.pk %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Batal
+                    </a>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-light border mb-4">
+                        <div class="fw-bold mb-1">{{ item.name }} ({{ item.code }})</div>
+                        <div class="small text-muted">
+                            Stok Tersedia Saat Ini: <strong class="text-primary">{{ item.stock_available }} {{ item.unit }}</strong>
+                        </div>
+                    </div>
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.new_available.id_for_label }}" class="form-label fw-semibold">
+                                {{ form.new_available.label }} ({{ item.unit }}) <span class="text-danger">*</span>
+                            </label>
+                            {{ form.new_available }}
+                            {% if form.new_available.errors %}<div class="text-danger small mt-1">{{ form.new_available.errors.0 }}</div>{% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.reason.id_for_label }}" class="form-label fw-semibold">
+                                {{ form.reason.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.reason }}
+                            <div class="form-text small text-muted">Setiap perubahan stok manual dicatat ke dalam audit log dan buku mutasi stok instansi.</div>
+                            {% if form.reason.errors %}<div class="text-danger small mt-1">{{ form.reason.errors.0 }}</div>{% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+                            <a href="{% url 'inventory:item_detail' item.pk %}" class="btn btn-outline-secondary">Kembali</a>
+                            <button type="submit" class="btn btn-warning px-4 fw-semibold shadow-sm">
+                                <i class="bi bi-check-lg me-1"></i>Simpan Perubahan Stok
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

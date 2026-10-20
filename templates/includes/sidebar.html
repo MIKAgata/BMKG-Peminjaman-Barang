@@ -1,0 +1,115 @@
+{% load static %}
+<div class="sidebar-wrapper bg-white border-end h-100 py-3">
+    <div class="px-3 mb-3 d-none d-lg-block">
+        <small class="text-uppercase text-muted fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+            {% if user.is_admin_role %}Menu Pengelola (Admin){% else %}Portal Pegawai{% endif %}
+        </small>
+    </div>
+
+    <ul class="nav nav-pills flex-column mb-auto px-2">
+        {% if user.is_admin_role %}
+            <!-- ADMIN MENU -->
+            <li class="nav-item">
+                <a href="{% url 'reports:admin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' or request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                    <i class="bi bi-speedometer2 me-2"></i>Dashboard Utama
+                </a>
+            </li>
+
+            <li class="nav-header px-3 pt-3 pb-1 text-muted text-uppercase fw-bold" style="font-size: 0.68rem;">Transaksi Pinjaman</li>
+            <li class="nav-item">
+                <a href="{% url 'loans:loan_request_list' %}" class="nav-link {% if 'loans' in request.path and 'request' in request.path %}active{% endif %}">
+                    <i class="bi bi-clipboard-check me-2"></i>Pengajuan Masuk
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'loans:handover_list' %}" class="nav-link {% if 'loans' in request.path and 'handover' in request.path %}active{% endif %}">
+                    <i class="bi bi-box-arrow-up-right me-2"></i>Serah Terima Fisik
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'loans:return_list' %}" class="nav-link {% if 'loans' in request.path and 'return' in request.path %}active{% endif %}">
+                    <i class="bi bi-box-arrow-in-down-left me-2"></i>Pengembalian Barang
+                </a>
+            </li>
+
+            <li class="nav-header px-3 pt-3 pb-1 text-muted text-uppercase fw-bold" style="font-size: 0.68rem;">Barang Habis Pakai</li>
+            <li class="nav-item">
+                <a href="{% url 'consumables:handover_list' %}" class="nav-link {% if 'consumables' in request.path %}active{% endif %}">
+                    <i class="bi bi-cart-check me-2"></i>Penyerahan Habis Pakai
+                </a>
+            </li>
+
+            <li class="nav-header px-3 pt-3 pb-1 text-muted text-uppercase fw-bold" style="font-size: 0.68rem;">Master Data</li>
+            <li class="nav-item">
+                <a href="{% url 'inventory:item_list' %}" class="nav-link {% if 'inventory' in request.path and 'items' in request.path %}active{% endif %}">
+                    <i class="bi bi-boxes me-2"></i>Master Barang
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'inventory:category_list' %}" class="nav-link {% if 'inventory' in request.path and 'categories' in request.path %}active{% endif %}">
+                    <i class="bi bi-tags me-2"></i>Kategori Barang
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'inventory:location_list' %}" class="nav-link {% if 'inventory' in request.path and 'locations' in request.path %}active{% endif %}">
+                    <i class="bi bi-geo-alt me-2"></i>Lokasi Penyimpanan
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'accounts:user_list' %}" class="nav-link {% if 'accounts/users' in request.path %}active{% endif %}">
+                    <i class="bi bi-people me-2"></i>Data Pegawai & Akun
+                </a>
+            </li>
+
+            <li class="nav-header px-3 pt-3 pb-1 text-muted text-uppercase fw-bold" style="font-size: 0.68rem;">Laporan & Audit</li>
+            <li class="nav-item">
+                <a href="{% url 'reports:report_index' %}" class="nav-link {% if 'reports/laporan' in request.path %}active{% endif %}">
+                    <i class="bi bi-file-earmark-bar-graph me-2"></i>Rekapitulasi Laporan
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'inventory:stock_ledger' %}" class="nav-link {% if 'inventory' in request.path and 'ledger' in request.path %}active{% endif %}">
+                    <i class="bi bi-journal-text me-2"></i>Buku Mutasi Stok
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'audit:log_list' %}" class="nav-link {% if 'audit' in request.path and 'logs' in request.path %}active{% endif %}">
+                    <i class="bi bi-shield-check me-2"></i>Audit Log Aktivitas
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'audit:setting_view' %}" class="nav-link {% if 'audit' in request.path and 'settings' in request.path %}active{% endif %}">
+                    <i class="bi bi-building-gear me-2"></i>Pengaturan Instansi
+                </a>
+            </li>
+
+        {% else %}
+            <!-- EMPLOYEE MENU -->
+            <li class="nav-item">
+                <a href="{% url 'reports:employee_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'employee_dashboard' or request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                    <i class="bi bi-house-door me-2"></i>Dashboard Saya
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'loans:catalog' %}" class="nav-link {% if 'catalog' in request.path %}active{% endif %}">
+                    <i class="bi bi-grid me-2"></i>Katalog Barang Pinjaman
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'loans:loan_apply' %}" class="nav-link {% if 'apply' in request.path %}active{% endif %}">
+                    <i class="bi bi-plus-circle me-2"></i>Ajukan Peminjaman
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'loans:my_loans' %}" class="nav-link {% if 'my-loans' in request.path %}active{% endif %}">
+                    <i class="bi bi-clock-history me-2"></i>Peminjaman & Riwayat Saya
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'accounts:profile' %}" class="nav-link {% if 'accounts/profile' in request.path %}active{% endif %}">
+                    <i class="bi bi-person me-2"></i>Profil Akun
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+</div>

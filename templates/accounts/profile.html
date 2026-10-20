@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Profil Saya - SIP3B BMKG{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">Profil Pengguna</h3>
+            <p class="text-muted small mb-0">Informasi akun dan data kepegawaian Anda</p>
+        </div>
+        <div>
+            <a href="{% url 'accounts:password_change' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-key me-1"></i>Ganti Kata Sandi
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12 col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center p-4">
+                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow" style="width: 80px; height: 80px; font-size: 2rem; font-weight: bold;">
+                        {{ user.first_name|first|default:user.username|first|upper }}
+                    </div>
+                    <h5 class="fw-bold mb-1">{{ user.display_name }}</h5>
+                    <p class="text-muted mb-2">@{{ user.username }}</p>
+                    <span class="badge {% if user.is_admin_role %}bg-danger{% else %}bg-success{% endif %} px-3 py-2">
+                        {{ user.get_role_display }}
+                    </span>
+
+                    <hr class="my-4">
+
+                    <div class="text-start">
+                        <div class="mb-2">
+                            <small class="text-muted d-block">Nomor Pegawai / NIP</small>
+                            <span class="fw-semibold">{{ user.employee_number|default:"-" }}</span>
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted d-block">Unit Kerja / Bagian</small>
+                            <span class="fw-semibold">{{ user.department|default:"-" }}</span>
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted d-block">Bergabung Sejak</small>
+                            <span class="fw-semibold">{{ user.date_joined|date:"d M Y" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="card-title mb-0 fw-bold"><i class="bi bi-person-lines-fill me-2 text-primary"></i>Perbarui Data Diri</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-label fw-semibold">Nama Depan</label>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}
+                                    <div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="{{ form.last_name.id_for_label }}" class="form-label fw-semibold">Nama Belakang</label>
+                                {{ form.last_name }}
+                                {% if form.last_name.errors %}
+                                    <div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="{{ form.email.id_for_label }}" class="form-label fw-semibold">Alamat Email</label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                    <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="{{ form.phone_number.id_for_label }}" class="form-label fw-semibold">Nomor Kontak / WhatsApp</label>
+                                {{ form.phone_number }}
+                                {% if form.phone_number.errors %}
+                                    <div class="text-danger small mt-1">{{ form.phone_number.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-12">
+                                <label for="{{ form.department.id_for_label }}" class="form-label fw-semibold">Unit Kerja / Bagian</label>
+                                {{ form.department }}
+                                {% if form.department.errors %}
+                                    <div class="text-danger small mt-1">{{ form.department.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-2 text-end">
+                            <button type="submit" class="btn btn-primary px-4 fw-semibold shadow-sm">
+                                <i class="bi bi-save me-1"></i>Simpan Perubahan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

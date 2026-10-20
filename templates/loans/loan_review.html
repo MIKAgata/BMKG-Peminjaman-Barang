@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Persetujuan Peminjaman: {{ loan.loan_number }} - SIP3B BMKG{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0 fw-bold"><i class="bi bi-clipboard-check me-2 text-primary"></i>Persetujuan Pengajuan Peminjaman</h5>
+                    <a href="{% url 'loans:loan_detail' loan.pk %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Batal
+                    </a>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-light border mb-4">
+                        <div class="fw-bold">{{ loan.loan_number }} - {{ loan.borrower.display_name }}</div>
+                        <div class="small text-muted mb-2">Unit: {{ loan.borrower.department|default:"BMKG" }} &bull; Rencana: {{ loan.start_date|date:"d M Y" }} s/d {{ loan.due_date|date:"d M Y" }}</div>
+                        <div class="small fw-semibold">Barang yang Diajukan:</div>
+                        <ul class="mb-0 small">
+                            {% for item in loan.items.all %}
+                                <li>{{ item.item.name }}: {{ item.quantity_requested }} {{ item.item.unit }} (Tersedia di Gudang: <strong>{{ item.item.stock_available }} {{ item.item.unit }}</strong>)</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold d-block">Keputusan Administrator <span class="text-danger">*</span></label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="action" id="actionApprove" value="APPROVE" autocomplete="off" checked>
+                                <label class="btn btn-outline-success py-2 fw-semibold" for="actionApprove">
+                                    <i class="bi bi-check-circle me-1"></i>Setujui Pengajuan
+                                </label>
+
+                                <input type="radio" class="btn-check" name="action" id="actionReject" value="REJECT" autocomplete="off">
+                                <label class="btn btn-outline-danger py-2 fw-semibold" for="actionReject">
+                                    <i class="bi bi-x-circle me-1"></i>Tolak Pengajuan
+                                </label>
+                            </div>
+                            {% if form.action.errors %}<div class="text-danger small mt-1">{{ form.action.errors.0 }}</div>{% endif %}
+                        </div>
+
+                        <div class="mb-4" id="rejectionReasonBlock">
+                            <label for="{{ form.rejection_reason.id_for_label }}" class="form-label fw-semibold">{{ form.rejection_reason.label }}</label>
+                            {{ form.rejection_reason }}
+                            <div class="form-text small text-muted">Wajib diisi apabila Anda memilih opsi <strong>Tolak Pengajuan</strong>.</div>
+                            {% if form.rejection_reason.errors %}<div class="text-danger small mt-1">{{ form.rejection_reason.errors.0 }}</div>{% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+                            <a href="{% url 'loans:loan_detail' loan.pk %}" class="btn btn-outline-secondary">Kembali</a>
+                            <button type="submit" class="btn btn-primary px-4 fw-semibold shadow-sm">
+                                <i class="bi bi-check-lg me-1"></i>Simpan Keputusan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

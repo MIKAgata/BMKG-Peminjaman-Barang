@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard Pegawai - SIP3B BMKG{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h3 class="fw-bold mb-1">Dashboard Pegawai</h3>
+            <p class="text-muted small mb-0">Selamat datang, <strong>{{ user.display_name }}</strong> ({{ user.department|default:"Pegawai BMKG" }}).</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'loans:catalog' %}" class="btn btn-outline-primary shadow-sm">
+                <i class="bi bi-grid me-1"></i>Katalog Barang
+            </a>
+            <a href="{% url 'loans:loan_apply' %}" class="btn btn-primary shadow-sm">
+                <i class="bi bi-plus-circle me-1"></i>Ajukan Peminjaman
+            </a>
+        </div>
+    </div>
+
+    <!-- Ringkasan Status Pegawai -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-4">
+            <div class="card shadow-sm border-start border-warning border-4 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem;">Pengajuan Menunggu</small>
+                            <h3 class="fw-bold mb-0 text-warning">{{ my_pending_count }}</h3>
+                            <small class="text-muted"><a href="{% url 'loans:my_loans' %}?status=PENDING" class="text-decoration-none">Lihat status &rarr;</a></small>
+                        </div>
+                        <div class="bg-warning-subtle text-warning p-3 rounded-circle">
+                            <i class="bi bi-hourglass-split fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-4">
+            <div class="card shadow-sm border-start border-primary border-4 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem;">Pinjaman Sedang Aktif</small>
+                            <h3 class="fw-bold mb-0 text-primary">{{ my_active_count }}</h3>
+                            <small class="text-muted">Barang sedang dalam tanggung jawab</small>
+                        </div>
+                        <div class="bg-primary-subtle text-primary p-3 rounded-circle">
+                            <i class="bi bi-box-seam fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-4">
+            <div class="card shadow-sm border-start border-danger border-4 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem;">Jatuh Tempo / Terlambat</small>
+                            <h3 class="fw-bold mb-0 text-danger">{{ my_overdue_count }}</h3>
+                            <small class="text-muted">Harap segera dikembalikan</small>
+                        </div>
+                        <div class="bg-danger-subtle text-danger p-3 rounded-circle">
+                            <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barang Sedang Dipinjam & Jatuh Tempo -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0 fw-bold"><i class="bi bi-clock-history me-2 text-primary"></i>Barang yang Sedang Anda Pinjam</h5>
+            <a href="{% url 'loans:my_loans' %}" class="small text-decoration-none">Semua Riwayat &rarr;</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">No Peminjaman</th>
+                        <th>Barang yang Dipinjam</th>
+                        <th>Tanggal Pinjam</th>
+                        <th>Batas Jatuh Tempo</th>
+                        <th>Status</th>
+                        <th class="text-end pe-3">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for loan in my_active_loans %}
+                        <tr class="{% if loan.is_overdue %}table-danger-subtle{% endif %}">
+                            <td class="ps-3 fw-bold text-primary">{{ loan.loan_number }}</td>
+                            <td>
+                                <ul class="list-unstyled mb-0 small">
+                                    {% for item in loan.items.all %}
+                                        <li>&bull; {{ item.item.name }} ({{ item.quantity_handed_over }} {{ item.item.unit }})</li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            <td>{{ loan.start_date|date:"d M Y" }}</td>
+                            <td>
+                                <div class="{% if loan.is_overdue %}text-danger fw-bold{% else %}text-dark{% endif %}">
+                                    {{ loan.due_date|date:"d M Y" }}
+                                    {% if loan.is_overdue %}
+                                        <span class="badge bg-danger ms-1">Terlambat</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary">{{ loan.get_status_display }}</span>
+                            </td>
+                            <td class="text-end pe-3">
+                                <a href="{% url 'loans:loan_detail' loan.pk %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> Detail
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                <i class="bi bi-check2-circle text-success fs-3 d-block mb-1"></i>
+                                Anda tidak sedang meminjam barang inventaris saat ini.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

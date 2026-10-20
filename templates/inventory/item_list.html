@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block title %}Master Data Barang - SIP3B BMKG{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h3 class="fw-bold mb-1">Master Data Barang</h3>
+            <p class="text-muted small mb-0">Kelola inventaris barang pinjaman (Loanable) dan barang habis pakai (Consumable)</p>
+        </div>
+        <div>
+            <a href="{% url 'inventory:item_create' %}" class="btn btn-primary shadow-sm">
+                <i class="bi bi-plus-lg me-1"></i>Tambah Barang Baru
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter & Pencarian -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-3">
+            <form method="get" class="row g-2 align-items-center">
+                <div class="col-12 col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Cari nama, kode, atau merek...">
+                    </div>
+                </div>
+                <div class="col-6 col-md-2">
+                    <select name="type" class="form-select">
+                        <option value="">-- Semua Tipe --</option>
+                        {% for t_code, t_label in item_types %}
+                            <option value="{{ t_code }}" {% if selected_type == t_code %}selected{% endif %}>{{ t_label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <select name="category" class="form-select">
+                        <option value="">-- Semua Kategori --</option>
+                        {% for cat in categories %}
+                            <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <select name="low_stock" class="form-select">
+                        <option value="">-- Stok Normal --</option>
+                        <option value="1" {% if selected_low_stock == '1' %}selected{% endif %}>⚠️ Stok Menipis / Habis</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">Filter</button>
+                    {% if query or selected_type or selected_category or selected_low_stock %}
+                        <a href="{% url 'inventory:item_list' %}" class="btn btn-outline-secondary" title="Reset filter"><i class="bi bi-x-circle"></i></a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabel Barang -->
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3" style="width: 50px;">No</th>
+                        <th>Kode & Nama Barang</th>
+                        <th>Kategori</th>
+                        <th>Tipe</th>
+                        <th>Lokasi</th>
+                        <th class="text-center">Stok Tersedia</th>
+                        <th class="text-center">Dipinjam</th>
+                        <th class="text-center">Rusak/Hilang</th>
+                        <th>Status</th>
+                        <th class="text-end pe-3" style="width: 140px;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in page_obj %}
+                        <tr class="{% if item.is_low_stock %}table-warning-subtle{% endif %}">
+                            <td class="ps-3 text-muted">{{ forloop.counter0|add:page_obj.start_index }}</td>
+                            <td>
+                                <a href="{% url 'inventory:item_detail' item.pk %}" class="fw-semibold text-primary text-decoration-none d-block">
+                                    {{ item.name }}
+                                </a>
+                                <small class="text-muted">Kode: <strong>{{ item.code }}</strong> {% if item.brand %}&bull; {{ item.brand }}{% endif %}</small>
+                            </td>
+                            <td><span class="badge bg-light text-dark border">{{ item.category.name }}</span></td>
+                            <td>
+                                {% if item.item_type == 'LOANABLE' %}
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">Pinjaman</span>
+                                {% else %}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Habis Pakai</span>
+                                {% endif %}
+                            </td>
+                            <td><small class="text-muted">{{ item.location.name|default:"-" }}</small></td>
+                            <td class="text-center">
+                                <span class="fw-bold {% if item.stock_available == 0 %}text-danger{% elif item.is_low_stock %}text-warning{% else %}text-success{% endif %}">
+                                    {{ item.stock_available }}
+                                </span>
+                                <small class="text-muted d-block" style="font-size: 0.75rem;">{{ item.unit }}</small>
+                            </td>
+                            <td class="text-center">
+                                {% if item.item_type == 'LOANABLE' %}
+                                    <span class="fw-semibold text-info">{{ item.stock_loaned }}</span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if item.item_type == 'LOANABLE' %}
+                                    {% if item.stock_damaged > 0 or item.stock_lost > 0 %}
+                                        <span class="badge bg-danger-subtle text-danger">R:{{ item.stock_damaged }} | H:{{ item.stock_lost }}</span>
+                                    {% else %}
+                                        <span class="text-muted">0</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if item.is_active %}
+                                    <span class="badge bg-success-subtle text-success">Aktif</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Nonaktif</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-3">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'inventory:item_detail' item.pk %}" class="btn btn-outline-info" title="Detail & Riwayat">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'inventory:item_edit' item.pk %}" class="btn btn-outline-primary" title="Ubah Master">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{% url 'inventory:item_adjust_stock' item.pk %}" class="btn btn-outline-secondary" title="Sesuaikan Stok">
+                                        <i class="bi bi-sliders"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="10" class="text-center py-4 text-muted">
+                                <i class="bi bi-inbox display-6 d-block mb-2 text-secondary"></i>
+                                Tidak ada data barang yang sesuai filter.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+            <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+                <small class="text-muted">Menampilkan {{ page_obj.start_index }} - {{ page_obj.end_index }} dari {{ page_obj.paginator.count }} barang</small>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ query }}&type={{ selected_type }}&category={{ selected_category }}&low_stock={{ selected_low_stock }}">Sebelumnya</a></li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">Sebelumnya</span></li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                                <a class="page-link" href="?page={{ num }}&q={{ query }}&type={{ selected_type }}&category={{ selected_category }}&low_stock={{ selected_low_stock }}">{{ num }}</a>
+                            </li>
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ query }}&type={{ selected_type }}&category={{ selected_category }}&low_stock={{ selected_low_stock }}">Berikutnya</a></li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">Berikutnya</span></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

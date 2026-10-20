@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Lokasi Penyimpanan - SIP3B BMKG{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h3 class="fw-bold mb-1">Master Lokasi Penyimpanan</h3>
+            <p class="text-muted small mb-0">Kelola ruang simpan, gudang BMN, atau lemari inventaris</p>
+        </div>
+        <div>
+            <a href="{% url 'inventory:location_create' %}" class="btn btn-primary shadow-sm">
+                <i class="bi bi-plus-lg me-1"></i>Tambah Lokasi
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3" style="width: 50px;">No</th>
+                        <th>Nama Lokasi</th>
+                        <th>Keterangan / Posisi</th>
+                        <th>Status</th>
+                        <th class="text-end pe-3" style="width: 100px;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for loc in locations %}
+                        <tr>
+                            <td class="ps-3 text-muted">{{ forloop.counter }}</td>
+                            <td><strong class="text-dark">{{ loc.name }}</strong></td>
+                            <td class="text-muted">{{ loc.description|default:"-" }}</td>
+                            <td>
+                                {% if loc.is_active %}<span class="badge bg-success">Aktif</span>{% else %}<span class="badge bg-secondary">Nonaktif</span>{% endif %}
+                            </td>
+                            <td class="text-end pe-3">
+                                <a href="{% url 'inventory:location_edit' loc.pk %}" class="btn btn-sm btn-outline-primary" title="Ubah Lokasi">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-muted">Belum ada lokasi penyimpanan yang ditambahkan.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

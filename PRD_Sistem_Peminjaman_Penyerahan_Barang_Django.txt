@@ -1,0 +1,531 @@
+PRODUCT REQUIREMENTS DOCUMENT (PRD) SISTEM INFORMASI PEMINJAMAN,
+PENYERAHAN, DAN PENGEMBALIAN BARANG Platform: Django
+
+Versi: 1.0 Status: Draft untuk implementasi Bahasa antarmuka: Bahasa
+Indonesia Target pengguna: Kantor atau instansi pemerintahan
+
+============================================================ 1.
+RINGKASAN PROYEK
+============================================================
+
+Aplikasi web ini digunakan untuk mengelola inventaris kantor dan
+transaksi barang dengan dua tipe utama:
+
+1.  BARANG PINJAMAN (LOANABLE) Contoh: kamera, monitor, webcam, laptop,
+    proyektor. Barang diserahkan sementara kepada pegawai dan wajib
+    dikembalikan. Sistem mencatat peminjam, tanggal pinjam, jatuh tempo,
+    pengembalian, kondisi barang, serta jumlah yang belum dikembalikan.
+
+2.  BARANG HABIS PAKAI / PENYERAHAN (CONSUMABLE) Contoh: kertas, pulpen,
+    tinta printer, map, dan ATK. Barang diserahkan kepada pegawai atau
+    unit kerja dan tidak perlu dikembalikan. Stok berkurang setelah
+    penyerahan dikonfirmasi.
+
+Aplikasi memiliki dashboard Admin/Petugas dan dashboard
+Pengguna/Pegawai. Admin mengelola master data dan memproses transaksi.
+Pegawai dapat mengajukan peminjaman, melihat status, serta memeriksa
+riwayat miliknya. Barang habis pakai diserahkan melalui transaksi
+penyerahan yang diproses oleh admin/petugas.
+
+============================================================ 2. TUJUAN
+============================================================
+
+-   Memusatkan pencatatan inventaris dan transaksi barang.
+-   Memisahkan alur barang pinjaman dan barang habis pakai.
+-   Mencegah stok negatif dan kesalahan penghitungan.
+-   Memudahkan pelacakan siapa yang meminjam atau menerima barang.
+-   Menyediakan riwayat transaksi dan audit aktivitas.
+-   Menghasilkan rekap serta dokumen transaksi yang dapat dicetak.
+-   Menyediakan akses berbeda untuk admin dan pegawai.
+
+============================================================ 3. RUANG
+LINGKUP ============================================================
+
+Termasuk: - Autentikasi dan kontrol akses berbasis peran. - Dashboard
+admin dan dashboard pengguna. - Master barang, kategori, lokasi, dan
+data pegawai. - Pengajuan dan pemrosesan peminjaman. - Pencatatan
+serah-terima fisik barang pinjaman. - Pengembalian penuh dan sebagian. -
+Penyerahan barang habis pakai. - Pergerakan stok dan riwayat
+transaksi. - Rekapitulasi dan laporan. - Cetak bukti transaksi. - Audit
+log, backup, dan validasi keamanan dasar.
+
+Tidak wajib untuk versi pertama: - Integrasi WhatsApp/SMS. - Integrasi
+tanda tangan elektronik tersertifikasi. - Aplikasi mobile native. -
+Integrasi dengan sistem keuangan atau aset pemerintah lainnya. -
+Multi-approval berjenjang. - Pembelian barang atau pengadaan. -
+Pengelolaan anggaran.
+
+============================================================ 4. PERAN
+DAN HAK AKSES
+============================================================
+
+4.1 Admin/Petugas - Login dan logout. - Melihat dashboard admin. -
+Mengelola data barang, kategori, lokasi, dan pegawai. - Mengelola akun
+pengguna. - Melihat dan memproses pengajuan peminjaman. - Menyetujui
+atau menolak pengajuan dengan alasan. - Mencatat penyerahan fisik barang
+pinjaman. - Mencatat pengembalian dan kondisi barang. - Memproses
+penyerahan barang habis pakai. - Melihat semua transaksi dan laporan. -
+Mencetak bukti transaksi. - Melihat audit log. - Melakukan
+koreksi/pembatalan dengan alasan sesuai aturan.
+
+4.2 Pengguna/Pegawai - Login dan logout. - Melihat dashboard pribadi. -
+Melihat barang yang dapat dipinjam dan jumlah tersedia. - Mengajukan
+peminjaman barang. - Melihat status pengajuan dan alasan penolakan. -
+Melihat barang yang sedang dipinjam dan tanggal jatuh tempo. - Melihat
+riwayat transaksi miliknya. - Mengelola profil dasar dan mengganti kata
+sandi. - Tidak dapat mengelola stok, menyetujui transaksi, atau mengubah
+transaksi yang telah dikonfirmasi.
+
+4.3 Prinsip akses - Semua halaman dan endpoint harus memeriksa
+autentikasi serta izin. - Pengguna hanya dapat melihat data miliknya,
+kecuali data katalog barang yang memang ditampilkan untuk umum bagi
+pengguna login. - Admin tidak boleh menggunakan fitur penghapusan untuk
+menghilangkan jejak transaksi yang sudah diproses. - Akun nonaktif tidak
+dapat login.
+
+============================================================ 5. FITUR
+FUNGSIONAL ============================================================
+
+5.1 Autentikasi dan akun - Login, logout, dan perubahan kata sandi. -
+Gunakan sistem autentikasi bawaan Django. - Gunakan model pengguna
+kustom Django sejak awal bila diperlukan untuk menambahkan nomor
+pegawai, unit kerja, atau peran. - Kata sandi harus di-hash oleh Django;
+jangan menyimpan plaintext. - Akun pegawai dibuat atau diaktifkan oleh
+admin. - Sediakan status aktif/nonaktif.
+
+5.2 Dashboard Admin Tampilkan: - Jumlah jenis barang aktif. - Jumlah
+stok barang habis pakai yang tersedia. - Jumlah unit barang pinjaman
+yang tersedia. - Jumlah unit barang yang sedang dipinjam. - Jumlah
+pengajuan menunggu diproses. - Jumlah peminjaman aktif dan terlambat. -
+Jumlah penyerahan barang habis pakai pada periode terpilih. - Transaksi
+terbaru. - Peringatan stok minimum. - Filter ringkasan berdasarkan
+rentang tanggal bila relevan.
+
+Angka dashboard harus dihitung dari data yang valid, bukan angka statis.
+
+5.3 Dashboard Pengguna Tampilkan: - Pengajuan yang menunggu keputusan. -
+Peminjaman yang sedang aktif. - Barang yang mendekati atau melewati
+tanggal jatuh tempo. - Riwayat transaksi pengguna. - Status dan alasan
+penolakan jika ada.
+
+5.4 Master data barang Setiap barang memiliki: - Kode barang unik. -
+Nama barang. - Kategori. - Tipe transaksi: LOANABLE atau CONSUMABLE. -
+Deskripsi opsional. - Merek/model opsional. - Satuan, misalnya unit,
+rim, lembar, atau buah. - Lokasi penyimpanan. - Stok fisik yang
+tercatat. - Stok tersedia atau jumlah saldo yang sesuai dengan tipe
+barang. - Batas minimum stok opsional. - Status aktif/nonaktif. -
+Tanggal dibuat dan diperbarui.
+
+Validasi: - Kode barang unik. - Stok tidak boleh negatif. - Barang yang
+sudah memiliki riwayat transaksi tidak boleh dihapus permanen; gunakan
+status nonaktif. - Tipe barang menentukan transaksi yang diizinkan. -
+LOANABLE hanya boleh masuk ke proses peminjaman/pengembalian. -
+CONSUMABLE hanya boleh masuk ke proses penyerahan habis pakai.
+
+Untuk barang bernilai tinggi yang perlu dilacak per unit, desain harus
+dapat dikembangkan dengan model AssetUnit yang memiliki kode aset, nomor
+seri, kondisi, lokasi, dan status unit. Untuk MVP, pelacakan jumlah
+dapat digunakan, tetapi aset serial harus diperlakukan per unit.
+
+5.5 Master kategori dan lokasi - Tambah, edit, dan nonaktifkan
+kategori. - Tambah, edit, dan nonaktifkan lokasi. - Kategori dan lokasi
+yang digunakan transaksi tidak boleh dihapus permanen secara
+sembarangan.
+
+5.6 Data pegawai/penerima Data yang disimpan: - Nama lengkap. - Nomor
+pegawai/NIP opsional sesuai kebijakan instansi. - Unit kerja/bagian. -
+Nomor kontak opsional. - Hubungan ke akun pengguna bila pegawai memiliki
+akun. - Status aktif/nonaktif.
+
+Data pegawai dan akun login harus dapat dibedakan. Tidak semua penerima
+barang harus memiliki akun pengguna.
+
+5.7 Pengajuan peminjaman Pegawai dapat: - Memilih satu atau beberapa
+barang bertipe LOANABLE. - Memasukkan jumlah setiap barang. - Memilih
+tanggal mulai pinjam dan tanggal rencana pengembalian. - Mengisi tujuan
+peminjaman. - Mengirim pengajuan dan melihat statusnya.
+
+Validasi: - Tanggal jatuh tempo tidak boleh lebih awal daripada tanggal
+pinjam. - Jumlah harus lebih dari nol. - Barang harus aktif dan bertipe
+LOANABLE. - Pengajuan tidak boleh dikonfirmasi bila jumlah yang tersedia
+tidak cukup. - Pengajuan yang menunggu persetujuan tidak mengurangi stok
+fisik. - Bila reservasi stok diterapkan, jumlah reservasi harus dihitung
+terpisah dan diperhitungkan dalam ketersediaan.
+
+5.8 Pemrosesan peminjaman oleh admin Admin dapat: - Melihat antrean
+pengajuan. - Menyetujui atau menolak pengajuan. - Menambahkan alasan
+penolakan. - Memeriksa ketersediaan stok. - Mencatat waktu dan petugas
+yang memproses. - Menghasilkan nomor peminjaman unik. - Mencetak bukti
+peminjaman.
+
+Status minimal: - PENDING: menunggu keputusan. - APPROVED: disetujui,
+barang belum tentu diserahkan. - REJECTED: ditolak. - ACTIVE: barang
+sudah diserahkan dan masih dipinjam. - PARTIALLY_RETURNED: sebagian
+barang telah kembali. - OVERDUE: ada barang aktif melewati jatuh
+tempo. - COMPLETED: seluruh barang telah dikembalikan dan
+diverifikasi. - CANCELLED: dibatalkan dengan alasan dan sesuai aturan.
+
+Status OVERDUE boleh dihitung otomatis berdasarkan tanggal jatuh tempo
+dan jumlah belum kembali, atau ditampilkan sebagai indikator turunan.
+Hindari status yang bertentangan dengan status transaksi utama.
+
+5.9 Serah-terima barang pinjaman Persetujuan tidak sama dengan
+penyerahan fisik. Admin mencatat penyerahan ketika barang benar-benar
+diberikan: - Tanggal/waktu penyerahan. - Penerima. - Barang dan jumlah
+aktual. - Kondisi saat keluar. - Petugas yang menyerahkan. - Catatan dan
+nomor bukti. - Dokumen bukti yang dapat dicetak.
+
+Stok tersedia berkurang saat penyerahan fisik dikonfirmasi, bukan saat
+pengajuan dibuat. Jika satu pengajuan diserahkan sebagian, sistem harus
+mencatat jumlah yang benar-benar keluar dan sisa yang belum diserahkan.
+
+5.10 Pengembalian barang pinjaman Admin mencari peminjaman aktif dan
+mencatat: - Tanggal/waktu pengembalian. - Barang yang dikembalikan. -
+Jumlah aktual yang dikembalikan. - Kondisi barang saat kembali. -
+Catatan kerusakan atau kehilangan. - Petugas penerima. - Nomor bukti
+pengembalian.
+
+Validasi: - Pengembalian tidak boleh melebihi jumlah yang sudah
+diserahkan dan masih belum dikembalikan. - Pengembalian sebagian
+diperbolehkan. - Stok tersedia bertambah hanya untuk barang yang
+dinyatakan layak tersedia. - Barang rusak masuk status
+pemeriksaan/perbaikan dan tidak langsung menambah stok tersedia. -
+Barang hilang tidak boleh otomatis menambah stok. - Transaksi selesai
+hanya jika semua jumlah pinjaman telah diselesaikan menurut kebijakan,
+termasuk penanganan barang hilang/rusak yang disahkan.
+
+5.11 Penyerahan barang habis pakai Hanya barang bertipe CONSUMABLE yang
+boleh diproses pada menu ini. Admin mencatat: - Nomor transaksi
+penyerahan. - Tanggal/waktu. - Pegawai atau unit penerima. - Barang dan
+jumlah. - Tujuan/keterangan. - Petugas pencatat/penyerah. - Catatan
+opsional. - Bukti transaksi yang dapat dicetak.
+
+Validasi: - Jumlah lebih dari nol. - Stok tersedia cukup. - Stok
+dikurangi setelah transaksi dikonfirmasi. - Transaksi penyerahan tidak
+menghasilkan kewajiban pengembalian. - Koreksi atau pembatalan setelah
+stok berubah harus menghasilkan pergerakan stok pembalik dan audit log,
+bukan menghapus jejak.
+
+5.12 Riwayat transaksi - Pencarian nomor transaksi. - Filter tipe
+transaksi, tanggal, barang, pegawai, unit kerja, dan status. - Halaman
+detail dengan daftar item dan perubahan status. - Admin dapat melihat
+seluruh transaksi. - Pengguna hanya dapat melihat transaksi miliknya. -
+Transaksi yang selesai harus tetap dapat dilihat dan dicetak.
+
+5.13 Rekapitulasi dan laporan Laporan yang diperlukan: - Peminjaman per
+hari, bulan, dan tahun. - Pengembalian per periode. - Penyerahan barang
+habis pakai per periode. - Daftar peminjaman aktif. - Daftar
+keterlambatan. - Daftar barang belum kembali. - Rekap stok per barang
+dan kategori. - Barang habis atau di bawah batas minimum. - Barang
+rusak, hilang, atau dalam perbaikan. - Barang keluar per pegawai/unit
+kerja. - Riwayat transaksi per barang.
+
+Fitur laporan: - Filter rentang tanggal, kategori, barang, pegawai, unit
+kerja, status. - Pagination untuk tabel besar. - Ekspor CSV/Excel dan
+PDF. - Cetak dengan nama instansi, periode laporan, waktu cetak, dan
+identitas petugas jika sesuai kebijakan. - Total laporan harus sesuai
+dengan data transaksi sumber.
+
+5.14 Dokumen transaksi - Bukti peminjaman. - Bukti serah-terima barang
+pinjaman. - Bukti pengembalian. - Bukti penyerahan barang habis pakai. -
+Nomor dokumen unik dan berurutan sesuai rancangan. - Identitas instansi,
+tanggal, pihak terkait, rincian barang, jumlah, dan kolom tanda tangan
+manual bila dibutuhkan. - PDF dibuat dari data transaksi yang
+tersimpan. - Dokumen lama harus merepresentasikan transaksi pada saat
+dokumen dibuat atau memiliki jejak revisi jika dicetak ulang setelah
+koreksi.
+
+5.15 Notifikasi Versi pertama: - Notifikasi dalam aplikasi untuk
+pengajuan baru bagi admin. - Status persetujuan/penolakan bagi
+pegawai. - Pengingat jatuh tempo dan keterlambatan. - Peringatan stok
+minimum.
+
+Email atau integrasi layanan pesan dapat ditambahkan kemudian dan tidak
+menjadi ketergantungan untuk fungsi inti.
+
+5.16 Audit log Catat tindakan penting: - Login yang relevan menurut
+kebijakan. - Membuat atau mengubah master data. - Persetujuan/penolakan
+peminjaman. - Konfirmasi penyerahan dan pengembalian. - Penyerahan
+barang habis pakai. - Pembatalan, koreksi, dan penyesuaian stok. Log
+menyimpan pengguna, tindakan, jenis dan ID objek, waktu, serta ringkasan
+perubahan. Jangan menyimpan kata sandi atau data rahasia.
+
+============================================================ 6. ATURAN
+STOK DAN KONSISTENSI DATA
+============================================================
+
+-   Bedakan stok fisik, stok tersedia, stok sedang dipinjam, dan stok
+    rusak bila model data membutuhkannya.
+-   Untuk barang pinjaman berbasis jumlah: stok tersedia = stok layak
+    pakai - jumlah yang sedang dipinjam - jumlah yang sedang direservasi
+    (jika reservasi digunakan).
+-   Ketika barang diserahkan untuk dipinjam, stok tersedia berkurang dan
+    jumlah sedang dipinjam bertambah.
+-   Ketika barang dikembalikan dalam kondisi baik, jumlah sedang
+    dipinjam berkurang dan stok tersedia bertambah.
+-   Ketika barang dikembalikan dalam kondisi rusak, jumlah sedang
+    dipinjam berkurang, tetapi stok tersedia tidak bertambah sampai
+    barang dinyatakan layak.
+-   Untuk barang habis pakai, penyerahan yang dikonfirmasi mengurangi
+    stok.
+-   Semua perubahan stok harus dicatat pada stock movement/ledger.
+-   Perubahan transaksi dan stok harus dijalankan dalam transaksi
+    database atomik Django, menggunakan transaction.atomic dan
+    penguncian baris (select_for_update) bila sesuai backend database.
+-   Cegah pemrosesan ganda akibat klik berulang dengan validasi status
+    dan mekanisme idempotensi yang sesuai.
+-   Jangan hanya mengandalkan validasi JavaScript; validasi sisi server
+    wajib.
+-   Stok tidak boleh diedit bebas tanpa alasan. Gunakan transaksi
+    penyesuaian stok yang memiliki alasan, pengguna, waktu, dan audit
+    log.
+
+============================================================ 7.
+RANCANGAN MODEL DATA DJANGO
+============================================================
+
+Model yang disarankan:
+
+7.1 User Gunakan custom user model bila memungkinkan sejak awal,
+dengan: - username/email untuk login sesuai kebijakan. - nama lengkap. -
+role: ADMIN atau EMPLOYEE. - employee_number opsional. - unit kerja. -
+is_active. Gunakan permission system Django untuk pemeriksaan akses;
+role tidak boleh hanya disembunyikan di antarmuka.
+
+7.2 Category - name - description - is_active
+
+7.3 Location - name - description - is_active
+
+7.4 Item - code (unik) - name - category (ForeignKey) - item_type:
+LOANABLE atau CONSUMABLE - description - brand/model opsional - unit -
+location (ForeignKey, dapat nullable sesuai kebijakan) -
+quantity_on_hand atau saldo stok yang ditetapkan secara jelas -
+minimum_stock - is_active - created_at - updated_at
+
+Hindari menyimpan banyak nilai stok yang saling bertentangan. Tentukan
+satu sumber data utama untuk saldo, lalu hitung nilai turunan atau
+perbarui secara atomik dengan stock ledger dan rekonsiliasi.
+
+7.5 Loan - loan_number (unik) - borrower (ForeignKey ke user/pegawai) -
+requested_at - loan_date atau planned_start_date - due_date - purpose -
+status - reviewed_by (admin, nullable) - reviewed_at -
+rejection_reason - created_at - updated_at
+
+7.6 LoanItem - loan (ForeignKey) - item (ForeignKey ke Item) -
+quantity_requested - quantity_handed_over - quantity_returned_usable
+atau rincian pengembalian terkait - catatan Validasi agar item bertipe
+LOANABLE.
+
+7.7 LoanHandover / IssueRecord - nomor bukti unik - loan -
+tanggal/waktu - petugas - penerima - catatan Rincian barang disimpan
+dalam tabel detail terpisah dengan item dan jumlah aktual yang
+diserahkan. Pisahkan catatan serah-terima dari header pengajuan agar
+penyerahan sebagian bisa didukung.
+
+7.8 ReturnRecord - return_number (unik) - loan - return_date -
+received_by - notes - created_at Rincian ReturnItem: - return_record -
+loan_item - quantity - condition/status kondisi - notes Setiap baris
+pengembalian harus terhubung ke LoanItem agar jumlah kumulatif yang
+kembali dapat divalidasi.
+
+7.9 Handover - handover_number (unik) - recipient/pegawai atau unit
+penerima - handover_date - purpose - notes - created_by - status
+(misalnya DRAFT, CONFIRMED, CANCELLED) Rincian HandoverItem: -
+handover - item - quantity - catatan Validasi agar item bertipe
+CONSUMABLE.
+
+7.10 StockMovement - item - movement_type - quantity_delta atau
+quantity + arah yang jelas - reference_type/reference_id atau ForeignKey
+yang terstruktur - created_by - created_at - reason Ledger harus
+memungkinkan penelusuran sumber perubahan stok. Tentukan konvensi tanda
+quantity secara konsisten dan dokumentasikan.
+
+7.11 AuditLog - user - action - entity_type - entity_id - details JSON -
+created_at
+
+7.12 Optional AssetUnit Untuk aset individual: - item - asset_code
+unik - serial_number opsional - condition - status - location -
+current_custodian opsional Gunakan model ini bila kamera/monitor/webcam
+harus ditelusuri satu per satu, bukan hanya dihitung berdasarkan jumlah.
+
+Relasi penting: - Satu pegawai memiliki banyak pengajuan peminjaman. -
+Satu peminjaman memiliki banyak LoanItem. - Satu LoanItem dapat memiliki
+beberapa baris pengembalian. - Satu transaksi penyerahan memiliki banyak
+HandoverItem. - Setiap pergerakan stok harus dapat ditelusuri ke
+transaksi sumber. - Riwayat transaksi tidak boleh hilang saat data
+master dinonaktifkan.
+
+============================================================ 8. STATUS
+DAN TRANSISI TRANSAKSI
+============================================================
+
+Pengajuan peminjaman: PENDING -> APPROVED atau REJECTED. APPROVED ->
+ACTIVE hanya setelah barang benar-benar diserahkan. ACTIVE ->
+PARTIALLY_RETURNED jika sebagian barang kembali.
+ACTIVE/PARTIALLY_RETURNED -> COMPLETED setelah semua kewajiban selesai.
+Transaksi yang memenuhi syarat dapat CANCELLED dengan alasan dan aturan.
+Keterlambatan sebaiknya dihitung dari due_date dan jumlah yang belum
+kembali, bukan membuat status utama yang bertentangan.
+
+Penyerahan barang habis pakai: DRAFT -> CONFIRMED atau CANCELLED. Stok
+hanya berubah ketika CONFIRMED. Pembatalan setelah konfirmasi harus
+menggunakan prosedur pembalik yang tercatat, bukan menghapus ledger.
+
+Pengembalian: Pengembalian adalah catatan transaksi tersendiri yang
+terkait ke pinjaman. Stok hanya diperbarui setelah pengembalian
+diverifikasi dan kondisi dicatat.
+
+============================================================ 9. HALAMAN
+/ NAVIGASI ============================================================
+
+Halaman umum: - Login. - Ganti kata sandi. - Profil.
+
+Menu Admin: 1. Dashboard. 2. Master Barang. 3. Kategori Barang. 4.
+Lokasi. 5. Data Pegawai/Pengguna. 6. Pengajuan Peminjaman. 7.
+Serah-Terima Barang Pinjaman. 8. Pengembalian Barang. 9. Penyerahan
+Barang Habis Pakai. 10. Riwayat Transaksi. 11. Rekapitulasi dan Laporan.
+12. Audit Log. 13. Pengaturan Instansi.
+
+Menu Pengguna: 1. Dashboard Saya. 2. Katalog Barang yang Dapat Dipinjam.
+3. Ajukan Peminjaman. 4. Peminjaman Saya. 5. Riwayat Saya. 6. Profil.
+
+Tampilkan menu berdasarkan izin pengguna. Tetap lakukan pemeriksaan izin
+pada setiap view/API, bukan hanya menyembunyikan tautan menu.
+
+============================================================ 10.
+TEKNOLOGI ============================================================
+
+Backend: - Python. - Django versi stabil yang kompatibel dengan
+lingkungan proyek. - Django ORM dan migrations. - Django Authentication
+dan Permission system.
+
+Database: - PostgreSQL direkomendasikan untuk deployment multi-user. -
+SQLite dapat digunakan untuk pengembangan lokal sederhana. - Gunakan
+transaction.atomic dan penguncian yang didukung database.
+
+Frontend: - Django Templates. - HTML, CSS, JavaScript. - Gunakan
+Bootstrap atau framework CSS lain jika dipilih konsisten. - Antarmuka
+responsif untuk desktop dan perangkat mobile. Style harus modern dan clean.
+
+Laporan: - CSV sebagai opsi sederhana. - Excel/PDF melalui library yang
+dipilih dan diuji. - Jangan menganggap ekspor berhasil sebelum file
+benar-benar terbentuk.
+
+Deployment: - Environment variables untuk secret key dan kredensial
+database. - DEBUG=False di produksi. - HTTPS di produksi. - Static files
+dan media files dikonfigurasi dengan benar. - Backup database berkala
+dan uji pemulihan. - Logging error dan pemantauan aplikasi.
+
+============================================================ 11.
+PERSYARATAN NON-FUNGSIONAL
+============================================================
+
+-   Antarmuka berbahasa Indonesia.
+-   Desain profesional, jelas, dan mudah digunakan petugas kantor.
+-   Responsif pada desktop, tablet, dan ponsel.
+-   Validasi sisi server untuk semua input penting.
+-   Proteksi CSRF dan penggunaan ORM/parameterized queries.
+-   Pencegahan akses data antarpegawai tanpa izin.
+-   Pagination, pencarian, dan filter untuk daftar besar.
+-   Format tanggal dan angka konsisten.
+-   Nomor transaksi unik.
+-   Audit trail untuk perubahan penting.
+-   Database dan file media dicadangkan secara berkala.
+-   Transaksi stok atomik dan konsisten.
+-   Jangan menampilkan secret key, password, atau stack trace kepada
+    pengguna pada lingkungan produksi.
+
+============================================================ 12.
+ACCEPTANCE CRITERIA / KRITERIA PENERIMAAN
+============================================================
+
+Aplikasi dianggap memenuhi MVP jika:
+
+1.  Admin dapat login dan mengelola master barang.
+2.  Admin dapat menentukan tipe LOANABLE atau CONSUMABLE.
+3.  Pegawai dapat login dan mengajukan barang LOANABLE.
+4.  Admin dapat menyetujui atau menolak pengajuan dengan alasan.
+5.  Stok tidak berkurang ketika pengajuan hanya dibuat atau disetujui,
+    sebelum barang benar-benar diserahkan.
+6.  Setelah serah-terima peminjaman dikonfirmasi, stok tersedia
+    berkurang dan jumlah barang dipinjam tercatat.
+7.  Pengembalian penuh dan sebagian dapat dicatat.
+8.  Jumlah yang dikembalikan tidak dapat melebihi jumlah yang masih
+    dipinjam.
+9.  Barang rusak tidak langsung ditambahkan ke stok tersedia.
+10. Barang CONSUMABLE dapat diserahkan kepada pegawai/unit.
+11. Setelah penyerahan CONSUMABLE dikonfirmasi, stok berkurang dan tidak
+    dibuat kewajiban pengembalian.
+12. Transaksi tidak dapat menggunakan stok melebihi ketersediaan.
+13. Pengguna hanya dapat melihat transaksi miliknya.
+14. Admin dapat melihat semua transaksi.
+15. Laporan dapat difilter berdasarkan tanggal dan tipe transaksi.
+16. Bukti transaksi dapat ditampilkan dan dicetak.
+17. Transaksi selesai tidak dapat dihapus tanpa jejak.
+18. Perubahan stok tercatat pada ledger dan dapat ditelusuri.
+19. Nomor transaksi unik dan validasi berjalan di sisi server.
+20. Uji akses, pengembalian berlebih, stok tidak cukup, pembatalan,
+    serta pemrosesan ganda berhasil dijalankan.
+
+============================================================ 13. RENCANA
+IMPLEMENTASI
+============================================================
+
+Tahap 1 - Fondasi: - Buat proyek Django. - Konfigurasikan environment
+variables dan database. - Tentukan custom user model sebelum migrasi
+pertama. - Buat model Category, Location, Item, dan Employee/Profile. -
+Buat migrasi dan admin Django. - Implementasikan login dan hak akses.
+
+Tahap 2 - Master data: - Halaman barang, kategori, lokasi, dan
+pegawai. - Validasi kode barang, tipe, satuan, dan stok. - Pencarian,
+filter, pagination.
+
+Tahap 3 - Peminjaman: - Pengajuan oleh pegawai. - Persetujuan/penolakan
+admin. - Serah-terima fisik dan perubahan stok. - Status dan bukti
+transaksi.
+
+Tahap 4 - Pengembalian: - Pengembalian sebagian/penuh. - Kondisi
+barang. - Penanganan rusak/hilang. - Validasi jumlah kumulatif dan stok.
+
+Tahap 5 - Penyerahan habis pakai: - Form penyerahan. - Validasi stok. -
+Konfirmasi dan ledger stok. - Bukti penyerahan.
+
+Tahap 6 - Dashboard dan laporan: - Statistik berdasarkan data nyata. -
+Rekap per periode dan filter. - Ekspor CSV/Excel/PDF dan dokumen cetak.
+
+Tahap 7 - Keamanan dan pengujian: - Audit log. - Pengujian permission. -
+Pengujian transaksi stok bersamaan. - Uji pembatalan dan koreksi. -
+Backup dan uji pemulihan. - Deployment dengan DEBUG=False dan HTTPS.
+
+============================================================ 14.
+KEPUTUSAN YANG PERLU DIKONFIRMASI
+============================================================
+
+Sebelum implementasi final, konfirmasikan: - Apakah pegawai dapat
+mengajukan peminjaman sendiri melalui akun? - Apakah admin perlu
+mencatat penyerahan barang pinjaman secara terpisah setelah pengajuan
+disetujui? (Direkomendasikan: ya.) - Apakah kamera/monitor/webcam harus
+dilacak per unit dengan nomor aset atau cukup berdasarkan jumlah? -
+Apakah penyerahan barang habis pakai membutuhkan tanda tangan manual,
+lampiran, atau nomor surat resmi? - Format ekspor yang wajib: Excel,
+PDF, atau keduanya? - Apakah kebijakan instansi mewajibkan NIP atau data
+pegawai tertentu?
+
+============================================================ 15. PRINSIP
+IMPLEMENTASI
+============================================================
+
+-   Bangun alur inti terlebih dahulu; jangan menambahkan fitur tambahan
+    sebelum stok dan transaksi teruji.
+-   Jangan mengandalkan frontend untuk keamanan atau validasi stok.
+-   Jangan menghapus transaksi historis secara permanen.
+-   Pisahkan persetujuan, penyerahan fisik, dan pengembalian.
+-   Pisahkan barang pinjaman dari barang habis pakai.
+-   Semua perubahan saldo harus atomik, dapat ditelusuri, dan memiliki
+    alasan.
+-   Gunakan tests Django untuk aturan bisnis, permission, dan perubahan
+    stok.
+-   Jangan menandai fitur selesai sebelum acceptance criteria terkait
+    lulus.
+
+AKHIR PRD

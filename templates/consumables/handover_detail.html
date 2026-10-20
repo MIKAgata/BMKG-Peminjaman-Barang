@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Detail Penyerahan: {{ handover.handover_number }} - SIP3B BMKG{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge {% if handover.status == 'CONFIRMED' %}bg-success{% else %}bg-danger{% endif %} px-3 py-2">
+                    {{ handover.get_status_display }}
+                </span>
+                <h3 class="fw-bold mb-0">{{ handover.handover_number }}</h3>
+            </div>
+            <p class="text-muted small mb-0">Waktu Penyerahan: {{ handover.handover_date|date:"d M Y H:i" }} WIB &bull; Penerima: <strong>{{ handover.recipient.display_name }}</strong></p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'reports:print_consumable_slip' handover.pk %}" target="_blank" class="btn btn-outline-secondary">
+                <i class="bi bi-printer me-1"></i>Cetak Bukti Penyerahan
+            </a>
+            {% if user.is_admin_role and handover.status == 'CONFIRMED' %}
+                <a href="{% url 'consumables:handover_cancel' handover.pk %}" class="btn btn-outline-danger">
+                    <i class="bi bi-x-circle me-1"></i>Batalkan Transaksi
+                </a>
+            {% endif %}
+            <a href="{% url 'consumables:handover_list' %}" class="btn btn-light border">Kembali</a>
+        </div>
+    </div>
+
+    {% if handover.cancellation_reason %}
+        <div class="alert alert-dark shadow-sm mb-4">
+            <div class="fw-bold mb-1"><i class="bi bi-slash-circle me-2"></i>Alasan Pembatalan:</div>
+            <div>{{ handover.cancellation_reason }}</div>
+            <small class="text-muted mt-1 d-block">Stok telah dikembalikan ke saldo gudang melalui jurnal mutasi pembalik.</small>
+        </div>
+    {% endif %}
+
+    <!-- Info Penerima & Keperluan -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="card-title mb-0 fw-bold"><i class="bi bi-person-badge me-2 text-primary"></i>Penerima Barang Habis Pakai</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-sm-5 text-muted small">Nama Penerima</div>
+                        <div class="col-sm-7 fw-semibold">{{ handover.recipient.display_name }}</div>
+                        <div class="col-sm-5 text-muted small">NIP</div>
+                        <div class="col-sm-7">{{ handover.recipient.employee_number|default:"-" }}</div>
+                        <div class="col-sm-5 text-muted small">Unit Kerja / Bagian</div>
+                        <div class="col-sm-7">{{ handover.department|default:handover.recipient.department|default:"BMKG" }}</div>
+                        <div class="col-sm-5 text-muted small">Petugas Penyerah</div>
+                        <div class="col-sm-7">{{ handover.created_by.display_name }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="card-title mb-0 fw-bold"><i class="bi bi-info-circle me-2 text-primary"></i>Tujuan & Catatan</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-sm-4 text-muted small">Tujuan Dinas</div>
+                        <div class="col-sm-8">{{ handover.purpose }}</div>
+                        <div class="col-sm-4 text-muted small">Catatan Tambahan</div>
+                        <div class="col-sm-8">{{ handover.notes|default:"-" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rincian Barang Habis Pakai -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="card-title mb-0 fw-bold"><i class="bi bi-boxes me-2 text-primary"></i>Rincian Barang yang Diserahkan</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3" style="width: 50px;">No</th>
+                        <th>Kode & Nama Barang</th>
+                        <th>Kategori</th>
+                        <th class="text-center">Jumlah Diserahkan</th>
+                        <th class="pe-3">Catatan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in handover.items.all %}
+                        <tr>
+                            <td class="ps-3 text-muted">{{ forloop.counter }}</td>
+                            <td>
+                                <strong>{{ item.item.name }}</strong>
+                                <small class="text-muted d-block">Kode: {{ item.item.code }}</small>
+                            </td>
+                            <td><span class="badge bg-light text-dark border">{{ item.item.category.name }}</span></td>
+                            <td class="text-center fw-bold text-success">{{ item.quantity }} {{ item.item.unit }}</td>
+                            <td class="pe-3 small text-muted">{{ item.notes|default:"-" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block title %}Penerimaan Pengembalian: {{ loan.loan_number }} - SIP3B BMKG{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-10">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0 fw-bold"><i class="bi bi-box-arrow-in-down-left me-2 text-warning"></i>Penerimaan & Verifikasi Pengembalian Barang</h5>
+                    <a href="{% url 'loans:loan_detail' loan.pk %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Batal
+                    </a>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-light border mb-4">
+                        <div class="row g-2">
+                            <div class="col-sm-6">
+                                <small class="text-muted d-block">Nomor Peminjaman</small>
+                                <strong class="text-primary">{{ loan.loan_number }}</strong>
+                            </div>
+                            <div class="col-sm-6">
+                                <small class="text-muted d-block">Peminjam</small>
+                                <strong>{{ loan.borrower.display_name }} ({{ loan.borrower.department|default:"BMKG" }})</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+
+                        <h6 class="fw-bold mb-3 text-dark">Pemeriksaan Fisik Barang yang Dikembalikan:</h6>
+                        <div class="table-responsive mb-4">
+                            <table class="table table-bordered align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Nama Barang Pinjaman</th>
+                                        <th class="text-center" style="width: 120px;">Sisa Pinjaman</th>
+                                        <th style="width: 130px;" class="text-success">Kembali Layak</th>
+                                        <th style="width: 130px;" class="text-warning">Kembali Rusak</th>
+                                        <th style="width: 130px;" class="text-danger">Hilang</th>
+                                        <th style="min-width: 180px;">Catatan Kondisi / Kerusakan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in items_to_return %}
+                                        <tr>
+                                            <td>
+                                                <strong class="text-dark">{{ item.item.name }}</strong>
+                                                <small class="text-muted d-block">Kode: {{ item.item.code }}</small>
+                                            </td>
+                                            <td class="text-center fw-bold text-primary">
+                                                {{ item.quantity_remaining_to_return }} {{ item.item.unit }}
+                                            </td>
+                                            <td>
+                                                <input type="number" name="usable_{{ item.id }}" class="form-control text-success fw-bold" 
+                                                       value="{{ item.quantity_remaining_to_return }}" 
+                                                       min="0" max="{{ item.quantity_remaining_to_return }}">
+                                            </td>
+                                            <td>
+                                                <input type="number" name="damaged_{{ item.id }}" class="form-control text-warning fw-bold" 
+                                                       value="0" min="0" max="{{ item.quantity_remaining_to_return }}">
+                                            </td>
+                                            <td>
+                                                <input type="number" name="lost_{{ item.id }}" class="form-control text-danger fw-bold" 
+                                                       value="0" min="0" max="{{ item.quantity_remaining_to_return }}">
+                                            </td>
+                                            <td>
+                                                <input type="text" name="notes_{{ item.id }}" class="form-control" placeholder="Contoh: Lensa lecet, baterai drop, dll.">
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="notes" class="form-label fw-semibold">Catatan Pengembalian Umum</label>
+                            <textarea name="notes" id="notes" class="form-control" rows="2" placeholder="Catatan penerimaan barang oleh petugas gudang..."></textarea>
+                        </div>
+
+                        <div class="alert alert-info-subtle border border-info-subtle small text-dark mb-4">
+                            <i class="bi bi-info-circle-fill text-info me-1"></i>
+                            <strong>Aturan Stok Pengembalian:</strong>
+                            Hanya barang dengan kondisi <strong>Layak</strong> yang akan menambah saldo stok tersedia di gudang. Barang yang dilaporkan <strong>Rusak</strong> atau <strong>Hilang</strong> akan dicatat terpisah dan TIDAK menambah stok gudang sampai proses perbaikan selesai disahkan.
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+                            <a href="{% url 'loans:loan_detail' loan.pk %}" class="btn btn-outline-secondary">Kembali</a>
+                            <button type="submit" class="btn btn-warning px-4 fw-semibold shadow-sm">
+                                <i class="bi bi-check2-circle me-1"></i>Simpan Pengembalian Barang
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

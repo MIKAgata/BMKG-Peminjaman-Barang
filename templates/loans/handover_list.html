@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Serah Terima Fisik Barang Pinjaman - SIP3B BMKG{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h3 class="fw-bold mb-1">Serah Terima Fisik Barang Pinjaman</h3>
+            <p class="text-muted small mb-0">Catatan bukti pengeluaran fisik barang dari gudang ke pegawai peminjam</p>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3" style="width: 50px;">No</th>
+                        <th>Nomor Bukti Serah Terima</th>
+                        <th>No Peminjaman</th>
+                        <th>Pegawai Penerima</th>
+                        <th>Waktu Serah</th>
+                        <th>Petugas Penyerah</th>
+                        <th>Rincian Barang</th>
+                        <th class="text-end pe-3" style="width: 120px;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ho in page_obj %}
+                        <tr>
+                            <td class="ps-3 text-muted">{{ forloop.counter0|add:page_obj.start_index }}</td>
+                            <td><strong class="text-primary">{{ ho.handover_number }}</strong></td>
+                            <td>
+                                <a href="{% url 'loans:loan_detail' ho.loan.pk %}" class="text-decoration-none">
+                                    {{ ho.loan.loan_number }}
+                                </a>
+                            </td>
+                            <td>{{ ho.recipient.display_name }}</td>
+                            <td>{{ ho.handover_date|date:"d M Y H:i" }}</td>
+                            <td>{{ ho.handed_over_by.display_name }}</td>
+                            <td>
+                                <ul class="list-unstyled mb-0 small">
+                                    {% for item in ho.items.all %}
+                                        <li>&bull; {{ item.loan_item.item.name }}: {{ item.quantity }} {{ item.loan_item.item.unit }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            <td class="text-end pe-3">
+                                <a href="{% url 'reports:print_handover_slip' ho.pk %}" target="_blank" class="btn btn-sm btn-outline-secondary" title="Cetak Bukti Serah Terima">
+                                    <i class="bi bi-printer"></i> Slip
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">Belum ada serah terima fisik barang.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+            <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+                <small class="text-muted">Menampilkan {{ page_obj.start_index }} - {{ page_obj.end_index }} dari {{ page_obj.paginator.count }} data</small>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Sebelumnya</a></li>
+                        {% endif %}
+                        {% for num in page_obj.paginator.page_range %}
+                            <li class="page-item {% if page_obj.number == num %}active{% endif %}"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                        {% endfor %}
+                        {% if page_obj.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Berikutnya</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

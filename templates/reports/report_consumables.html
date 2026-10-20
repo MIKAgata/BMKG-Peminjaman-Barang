@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Laporan Barang Habis Pakai - SIP3B BMKG{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h3 class="fw-bold mb-1">Laporan Penyerahan Barang Habis Pakai (ATK)</h3>
+            <p class="text-muted small mb-0">Rekapitulasi penggunaan barang habis pakai per unit kerja dan periode</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="?export=csv&start_date={{ start_date }}&end_date={{ end_date }}&department={{ department }}" class="btn btn-sm btn-outline-success">
+                <i class="bi bi-filetype-csv me-1"></i>Ekspor CSV
+            </a>
+            <a href="?export=excel&start_date={{ start_date }}&end_date={{ end_date }}&department={{ department }}" class="btn btn-sm btn-success">
+                <i class="bi bi-file-earmark-excel me-1"></i>Ekspor Excel
+            </a>
+            <a href="?export=pdf&start_date={{ start_date }}&end_date={{ end_date }}&department={{ department }}" class="btn btn-sm btn-danger">
+                <i class="bi bi-file-earmark-pdf me-1"></i>Ekspor PDF
+            </a>
+            <a href="{% url 'reports:report_index' %}" class="btn btn-sm btn-outline-secondary">Kembali</a>
+        </div>
+    </div>
+
+    <!-- Filter Form -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-3">
+            <form method="get" class="row g-2 align-items-center">
+                <div class="col-12 col-md-3">
+                    <label class="form-label small fw-semibold mb-1">Dari Tanggal</label>
+                    <input type="date" name="start_date" value="{{ start_date }}" class="form-control form-control-sm">
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label small fw-semibold mb-1">Sampai Tanggal</label>
+                    <input type="date" name="end_date" value="{{ end_date }}" class="form-control form-control-sm">
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label small fw-semibold mb-1">Unit Kerja / Bagian</label>
+                    <input type="text" name="department" value="{{ department }}" class="form-control form-control-sm" placeholder="Contoh: Meteorologi, Geofisika, TU...">
+                </div>
+                <div class="col-12 col-md-2 d-flex align-items-end gap-1">
+                    <button type="submit" class="btn btn-primary btn-sm flex-fill">Tampilkan</button>
+                    {% if start_date or end_date or department %}
+                        <a href="{% url 'reports:report_consumables' %}" class="btn btn-outline-secondary btn-sm" title="Reset filter"><i class="bi bi-x-circle"></i></a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabel Data Laporan -->
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">No Bukti</th>
+                        <th>Waktu Serah</th>
+                        <th>Penerima</th>
+                        <th>Unit Kerja</th>
+                        <th>Barang yang Diberikan</th>
+                        <th>Status</th>
+                        <th class="pe-3">Tujuan Kedinasan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for h in page_obj %}
+                        <tr>
+                            <td class="ps-3 fw-bold text-success">{{ h.handover_number }}</td>
+                            <td>{{ h.handover_date|date:"d/m/Y H:i" }}</td>
+                            <td>{{ h.recipient.display_name }}</td>
+                            <td>{{ h.department|default:"-" }}</td>
+                            <td>
+                                <ul class="list-unstyled mb-0 small">
+                                    {% for item in h.items.all %}
+                                        <li>&bull; {{ item.item.name }} ({{ item.quantity }} {{ item.item.unit }})</li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            <td>
+                                {% if h.status == 'CONFIRMED' %}
+                                    <span class="badge bg-success-subtle text-success">Dikonfirmasi</span>
+                                {% else %}
+                                    <span class="badge bg-danger-subtle text-danger">Dibatalkan</span>
+                                {% endif %}
+                            </td>
+                            <td class="pe-3 small text-muted">{{ h.purpose }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">Tidak ada transaksi penyerahan barang habis pakai pada periode ini.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+            <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+                <small class="text-muted">Menampilkan {{ page_obj.start_index }} - {{ page_obj.end_index }} dari {{ page_obj.paginator.count }} data</small>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&start_date={{ start_date }}&end_date={{ end_date }}&department={{ department }}">Sebelumnya</a></li>
+                        {% endif %}
+                        {% for num in page_obj.paginator.page_range %}
+                            <li class="page-item {% if page_obj.number == num %}active{% endif %}"><a class="page-link" href="?page={{ num }}&start_date={{ start_date }}&end_date={{ end_date }}&department={{ department }}">{{ num }}</a></li>
+                        {% endfor %}
+                        {% if page_obj.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&start_date={{ start_date }}&end_date={{ end_date }}&department={{ department }}">Berikutnya</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

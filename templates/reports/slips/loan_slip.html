@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Surat Bukti Peminjaman - {{ loan.loan_number }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            color: #000;
+            background-color: #f8f9fa;
+            padding: 20px 0;
+        }
+        .sheet {
+            background: #fff;
+            max-width: 800px;
+            margin: auto;
+            padding: 40px 50px;
+            border: 1px solid #ddd;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header-kop {
+            text-align: center;
+            border-bottom: 3px double #000;
+            padding-bottom: 12px;
+            margin-bottom: 25px;
+        }
+        .header-kop h4 {
+            margin: 0;
+            font-size: 16pt;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .header-kop h5 {
+            margin: 2px 0;
+            font-size: 13pt;
+            font-weight: bold;
+        }
+        .header-kop p {
+            margin: 0;
+            font-size: 9pt;
+            color: #333;
+        }
+        .doc-title {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .doc-title h5 {
+            font-weight: bold;
+            text-decoration: underline;
+            margin-bottom: 4px;
+            font-size: 13pt;
+        }
+        .meta-table td {
+            padding: 3px 6px;
+            font-size: 11pt;
+        }
+        .items-table {
+            width: 100%;
+            margin-top: 15px;
+            margin-bottom: 25px;
+            border-collapse: collapse;
+        }
+        .items-table th, .items-table td {
+            border: 1px solid #000;
+            padding: 6px 10px;
+            font-size: 10pt;
+        }
+        .items-table th {
+            background-color: #f2f2f2;
+            text-align: center;
+        }
+        .sign-area {
+            margin-top: 35px;
+        }
+        .sign-box {
+            text-align: center;
+            font-size: 10pt;
+        }
+        @media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+            .sheet {
+                border: none;
+                box-shadow: none;
+                padding: 0;
+                max-width: 100%;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print text-center mb-3">
+        <button onclick="window.print()" class="btn btn-primary btn-sm px-4">
+            Cetak Dokumen (Print)
+        </button>
+        <button onclick="window.close()" class="btn btn-secondary btn-sm px-3 ms-2">
+            Tutup
+        </button>
+    </div>
+
+    <div class="sheet">
+        <!-- Kop Surat -->
+        <div class="header-kop">
+            <h4>{{ setting.institution_name|default:"BADAN METEOROLOGI, KLIMATOLOGI, DAN GEOFISIKA" }}</h4>
+            <h5>{{ setting.unit_name|default:"BAGIAN UMUM DAN TATA USAHA" }}</h5>
+            <p>{{ setting.address|default:"Jl. Angkasa I No.2, Kemayoran, Jakarta Pusat" }} &bull; Telp: {{ setting.phone|default:"(021) 4246321" }} &bull; Email: {{ setting.email|default:"inventaris@bmkg.go.id" }}</p>
+        </div>
+
+        <!-- Judul Dokumen -->
+        <div class="doc-title">
+            <h5>SURAT PERMOHONAN & BUKTI PEMINJAMAN BARANG</h5>
+            <small>Nomor Registrasi: <strong>{{ loan.loan_number }}</strong></small>
+        </div>
+
+        <p style="font-size: 11pt;">Pada hari ini, tanggal <strong>{{ loan.created_at|date:"d F Y" }}</strong>, telah tercatat pengajuan peminjaman barang inventaris kedinasan sebagai berikut:</p>
+
+        <!-- Informasi Peminjam -->
+        <table class="meta-table mb-3">
+            <tr>
+                <td style="width: 180px;">Nama Peminjam</td>
+                <td style="width: 10px;">:</td>
+                <td><strong>{{ loan.borrower.display_name }}</strong></td>
+            </tr>
+            <tr>
+                <td>Nomor Pegawai / NIP</td>
+                <td>:</td>
+                <td>{{ loan.borrower.employee_number|default:"-" }}</td>
+            </tr>
+            <tr>
+                <td>Unit Kerja / Bagian</td>
+                <td>:</td>
+                <td>{{ loan.borrower.department|default:"BMKG" }}</td>
+            </tr>
+            <tr>
+                <td>Tanggal Pinjam</td>
+                <td>:</td>
+                <td>{{ loan.start_date|date:"d F Y" }} s/d <strong>{{ loan.due_date|date:"d F Y" }}</strong> (Jatuh Tempo)</td>
+            </tr>
+            <tr>
+                <td>Keperluan / Tujuan</td>
+                <td>:</td>
+                <td>{{ loan.purpose }}</td>
+            </tr>
+            <tr>
+                <td>Status Saat Ini</td>
+                <td>:</td>
+                <td><strong>{{ loan.get_status_display }}</strong></td>
+            </tr>
+        </table>
+
+        <!-- Tabel Barang -->
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th style="width: 40px;">No</th>
+                    <th>Kode Barang</th>
+                    <th>Nama Peralatan / Barang</th>
+                    <th style="width: 100px;">Jumlah</th>
+                    <th>Catatan / Spesifikasi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in loan.items.all %}
+                    <tr>
+                        <td class="text-center">{{ forloop.counter }}</td>
+                        <td>{{ item.item.code }}</td>
+                        <td><strong>{{ item.item.name }}</strong></td>
+                        <td class="text-center">{{ item.quantity_requested }} {{ item.item.unit }}</td>
+                        <td>{{ item.notes|default:"-" }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <p style="font-size: 10pt; line-height: 1.4;">
+            <em>Ketentuan:</em> Peminjam bertanggung jawab penuh atas pemeliharaan dan keselamatan fisik barang selama masa peminjaman dan wajib mengembalikan barang tepat waktu dalam kondisi baik.
+        </p>
+
+        <!-- Kolom Tanda Tangan -->
+        <div class="row sign-area">
+            <div class="col-4 sign-box">
+                <p class="mb-1">Pegawai Peminjam,</p>
+                <div style="height: 60px;"></div>
+                <p class="mb-0 fw-bold text-decoration-underline">{{ loan.borrower.display_name }}</p>
+                <small>NIP. {{ loan.borrower.employee_number|default:"..........................." }}</small>
+            </div>
+            <div class="col-4 sign-box">
+                <p class="mb-1">Petugas Pengelola BMN,</p>
+                <div style="height: 60px;"></div>
+                <p class="mb-0 fw-bold text-decoration-underline">{{ setting.warehouse_officer_name|default:"Petugas Pengelola BMN" }}</p>
+                <small>NIP. {{ setting.warehouse_officer_nip|default:"..........................." }}</small>
+            </div>
+            <div class="col-4 sign-box">
+                <p class="mb-1">Mengetahui / Menyetujui,</p>
+                <div style="height: 60px;"></div>
+                <p class="mb-0 fw-bold text-decoration-underline">{{ setting.head_officer_name|default:"Kepala Bagian Umum" }}</p>
+                <small>NIP. {{ setting.head_officer_nip|default:"..........................." }}</small>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

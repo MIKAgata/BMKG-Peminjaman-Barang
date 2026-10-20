@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+
+{% block title %}Detail Peminjaman: {{ loan.loan_number }} - SIP3B BMKG{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge {% if loan.status == 'PENDING' %}bg-warning text-dark{% elif loan.status == 'APPROVED' %}bg-info text-white{% elif loan.status == 'ACTIVE' %}bg-primary{% elif loan.status == 'COMPLETED' %}bg-success{% elif loan.status == 'REJECTED' %}bg-danger{% else %}bg-secondary{% endif %} px-3 py-2">
+                    {{ loan.get_status_display }}
+                </span>
+                {% if loan.is_overdue %}
+                    <span class="badge bg-danger px-3 py-2"><i class="bi bi-exclamation-triangle-fill me-1"></i>TERLAMBAT (Jatuh Tempo: {{ loan.due_date|date:"d M Y" }})</span>
+                {% endif %}
+                <h3 class="fw-bold mb-0">{{ loan.loan_number }}</h3>
+            </div>
+            <p class="text-muted small mb-0">Diajukan pada: {{ loan.created_at|date:"d M Y H:i" }} WIB &bull; Peminjam: <strong>{{ loan.borrower.display_name }}</strong></p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'reports:print_loan_slip' loan.pk %}" target="_blank" class="btn btn-outline-secondary">
+                <i class="bi bi-printer me-1"></i>Cetak Surat Bukti
+            </a>
+
+            {% if user.is_admin_role %}
+                {% if loan.status == 'PENDING' %}
+                    <a href="{% url 'loans:loan_review' loan.pk %}" class="btn btn-primary shadow-sm">
+                        <i class="bi bi-clipboard-check me-1"></i>Proses Persetujuan
+                    </a>
+                {% elif loan.status == 'APPROVED' %}
+                    <a href="{% url 'loans:handover_create' loan.pk %}" class="btn btn-success shadow-sm">
+                        <i class="bi bi-box-arrow-up-right me-1"></i>Serah Terima Fisik Barang
+                    </a>
+                {% elif loan.status == 'ACTIVE' or loan.status == 'PARTIALLY_RETURNED' %}
+                    {% if loan.total_items_pending_return > 0 %}
+                        <a href="{% url 'loans:return_create' loan.pk %}" class="btn btn-warning shadow-sm">
+                            <i class="bi bi-box-arrow-in-down-left me-1"></i>Proses Pengembalian
+                        </a>
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+
+            {% if loan.status == 'PENDING' or loan.status == 'APPROVED' %}
+                {% if user.is_admin_role or loan.borrower == user %}
+                    <a href="{% url 'loans:loan_cancel' loan.pk %}" class="btn btn-outline-danger">
+                        <i class="bi bi-x-circle me-1"></i>Batalkan
+                    </a>
+                {% endif %}
+            {% endif %}
+
+            {% if user.is_admin_role %}
+                <a href="{% url 'loans:loan_request_list' %}" class="btn btn-light border">Kembali</a>
+            {% else %}
+                <a href="{% url 'loans:my_loans' %}" class="btn btn-light border">Kembali</a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if loan.rejection_reason %}
+        <div class="alert alert-danger shadow-sm mb-4">
+            <div class="fw-bold mb-1"><i class="bi bi-x-octagon-fill me-2"></i>Alasan Penolakan:</div>
+            <div>{{ loan.rejection_reason }}</div>
+            <small class="text-muted d-block mt-1">Ditolak oleh: {{ loan.reviewed_by.display_name }} pada {{ loan.reviewed_at|date:"d M Y H:i" }}</small>
+        </div>
+    {% endif %}
+
+    {% if loan.cancellation_reason %}
+        <div class="alert alert-dark shadow-sm mb-4">
+            <div class="fw-bold mb-1"><i class="bi bi-slash-circle me-2"></i>Alasan Pembatalan:</div>
+            <div>{{ loan.cancellation_reason }}</div>
+        </div>
+    {% endif %}
+
+    <!-- Info Peminjam & Jadwal -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="card-title mb-0 fw-bold"><i class="bi bi-person-badge me-2 text-primary"></i>Informasi Peminjam</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-sm-5 text-muted small">Nama Pegawai</div>
+                        <div class="col-sm-7 fw-semibold">{{ loan.borrower.display_name }}</div>
+                        <div class="col-sm-5 text-muted small">NIP</div>
+                        <div class="col-sm-7">{{ loan.borrower.employee_number|default:"-" }}</div>
+                        <div class="col-sm-5 text-muted small">Unit Kerja / Bagian</div>
+                        <div class="col-sm-7">{{ loan.borrower.department|default:"-" }}</div>
+                        <div class="col-sm-5 text-muted small">Nomor Kontak</div>
+                        <div class="col-sm-7">{{ loan.borrower.phone_number|default:"-" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="card-title mb-0 fw-bold"><i class="bi bi-calendar-range me-2 text-primary"></i>Jadwal & Tujuan Peminjaman</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-sm-5 text-muted small">Tanggal Rencana Mulai</div>
+                        <div class="col-sm-7 fw-semibold">{{ loan.start_date|date:"d F Y" }}</div>
+                        <div class="col-sm-5 text-muted small">Tanggal Jatuh Tempo</div>
+                        <div class="col-sm-7 fw-semibold {% if loan.is_overdue %}text-danger{% endif %}">{{ loan.due_date|date:"d F Y" }}</div>
+                        <div class="col-sm-5 text-muted small">Tujuan Dinas</div>
+                        <div class="col-sm-7">{{ loan.purpose }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rincian Barang yang Dipinjam -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="card-title mb-0 fw-bold"><i class="bi bi-boxes me-2 text-primary"></i>Daftar Rincian Barang Pinjaman</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3" style="width: 50px;">No</th>
+                        <th>Kode & Nama Barang</th>
+                        <th class="text-center">Diminta</th>
+                        <th class="text-center">Telah Diserahkan</th>
+                        <th class="text-center">Kembali Layak</th>
+                        <th class="text-center">Kembali Rusak</th>
+                        <th class="text-center">Hilang</th>
+                        <th class="text-center">Sisa Belum Kembali</th>
+                        <th class="pe-3">Catatan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in loan.items.all %}
+                        <tr>
+                            <td class="ps-3 text-muted">{{ forloop.counter }}</td>
+                            <td>
+                                <strong class="text-dark">{{ item.item.name }}</strong>
+                                <small class="text-muted d-block">Kode: {{ item.item.code }} &bull; {{ item.item.category.name }}</small>
+                            </td>
+                            <td class="text-center fw-semibold">{{ item.quantity_requested }} {{ item.item.unit }}</td>
+                            <td class="text-center fw-bold text-primary">{{ item.quantity_handed_over }} {{ item.item.unit }}</td>
+                            <td class="text-center text-success fw-bold">{{ item.quantity_returned_usable }}</td>
+                            <td class="text-center text-warning fw-bold">{{ item.quantity_returned_damaged }}</td>
+                            <td class="text-center text-danger fw-bold">{{ item.quantity_returned_lost }}</td>
+                            <td class="text-center">
+                                {% if item.quantity_remaining_to_return > 0 %}
+                                    <span class="badge bg-danger">{{ item.quantity_remaining_to_return }} {{ item.item.unit }}</span>
+                                {% else %}
+                                    <span class="badge bg-success-subtle text-success">Lengkap</span>
+                                {% endif %}
+                            </td>
+                            <td class="pe-3 small text-muted">{{ item.notes|default:"-" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Riwayat Serah Terima Fisik -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="card-title mb-0 fw-bold"><i class="bi bi-box-arrow-up-right me-2 text-success"></i>Riwayat Serah Terima Fisik (Barang Keluar Gudang)</h5>
+        </div>
+        <div class="card-body p-0">
+            {% if loan.handovers.all %}
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3">Nomor Bukti</th>
+                                <th>Waktu Serah Terima</th>
+                                <th>Petugas Penyerah</th>
+                                <th>Barang Diserahkan</th>
+                                <th class="pe-3 text-end">Cetak</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ho in loan.handovers.all %}
+                                <tr>
+                                    <td class="ps-3 fw-bold text-primary">{{ ho.handover_number }}</td>
+                                    <td>{{ ho.handover_date|date:"d M Y H:i" }}</td>
+                                    <td>{{ ho.handed_over_by.display_name }}</td>
+                                    <td>
+                                        <ul class="list-unstyled mb-0 small">
+                                            {% for h_item in ho.items.all %}
+                                                <li>&bull; {{ h_item.loan_item.item.name }}: <strong>{{ h_item.quantity }} {{ h_item.loan_item.item.unit }}</strong> (Kondisi: {{ h_item.initial_condition }})</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </td>
+                                    <td class="pe-3 text-end">
+                                        <a href="{% url 'reports:print_handover_slip' ho.pk %}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                            <i class="bi bi-printer"></i> Slip
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="p-4 text-center text-muted">
+                    <i class="bi bi-clock-history fs-3 d-block mb-1"></i>
+                    Belum ada serah terima fisik barang yang dicatat.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Riwayat Pengembalian Fisik -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="card-title mb-0 fw-bold"><i class="bi bi-box-arrow-in-down-left me-2 text-warning"></i>Riwayat Pengembalian Barang (Barang Masuk Gudang)</h5>
+        </div>
+        <div class="card-body p-0">
+            {% if loan.returns.all %}
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3">Nomor Bukti</th>
+                                <th>Waktu Pengembalian</th>
+                                <th>Petugas Penerima</th>
+                                <th>Rincian Barang Kembali</th>
+                                <th class="pe-3 text-end">Cetak</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ret in loan.returns.all %}
+                                <tr>
+                                    <td class="ps-3 fw-bold text-warning">{{ ret.return_number }}</td>
+                                    <td>{{ ret.return_date|date:"d M Y H:i" }}</td>
+                                    <td>{{ ret.received_by.display_name }}</td>
+                                    <td>
+                                        <ul class="list-unstyled mb-0 small">
+                                            {% for r_item in ret.items.all %}
+                                                <li>
+                                                    &bull; {{ r_item.loan_item.item.name }}:
+                                                    {% if r_item.quantity_usable > 0 %}<span class="badge bg-success-subtle text-success">Layak: {{ r_item.quantity_usable }}</span>{% endif %}
+                                                    {% if r_item.quantity_damaged > 0 %}<span class="badge bg-warning-subtle text-warning">Rusak: {{ r_item.quantity_damaged }}</span>{% endif %}
+                                                    {% if r_item.quantity_lost > 0 %}<span class="badge bg-danger-subtle text-danger">Hilang: {{ r_item.quantity_lost }}</span>{% endif %}
+                                                    {% if r_item.damage_notes %}<small class="text-muted">({{ r_item.damage_notes }})</small>{% endif %}
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </td>
+                                    <td class="pe-3 text-end">
+                                        <a href="{% url 'reports:print_return_slip' ret.pk %}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                            <i class="bi bi-printer"></i> Slip
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="p-4 text-center text-muted">
+                    <i class="bi bi-arrow-return-left fs-3 d-block mb-1"></i>
+                    Belum ada pengembalian barang yang dicatat.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

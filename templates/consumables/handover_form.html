@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}Penyerahan Barang Habis Pakai Baru - SIP3B BMKG{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-10">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0 fw-bold"><i class="bi bi-cart-check me-2 text-primary"></i>Formulir Penyerahan Barang Habis Pakai (ATK)</h5>
+                    <a href="{% url 'consumables:handover_list' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Batal
+                    </a>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="{{ form.recipient.id_for_label }}" class="form-label fw-semibold">Pegawai Penerima <span class="text-danger">*</span></label>
+                                {{ form.recipient }}
+                                {% if form.recipient.errors %}<div class="text-danger small mt-1">{{ form.recipient.errors.0 }}</div>{% endif %}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="{{ form.department.id_for_label }}" class="form-label fw-semibold">Unit Kerja / Bagian Penerima</label>
+                                {{ form.department }}
+                                <div class="form-text small">Kosongkan jika ingin menggunakan unit kerja bawaan pegawai.</div>
+                                {% if form.department.errors %}<div class="text-danger small mt-1">{{ form.department.errors.0 }}</div>{% endif %}
+                            </div>
+
+                            <div class="col-12">
+                                <label for="{{ form.purpose.id_for_label }}" class="form-label fw-semibold">Tujuan / Keperluan Kedinasan <span class="text-danger">*</span></label>
+                                {{ form.purpose }}
+                                {% if form.purpose.errors %}<div class="text-danger small mt-1">{{ form.purpose.errors.0 }}</div>{% endif %}
+                            </div>
+
+                            <div class="col-12">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label fw-semibold">Catatan Tambahan (Opsional)</label>
+                                {{ form.notes }}
+                                {% if form.notes.errors %}<div class="text-danger small mt-1">{{ form.notes.errors.0 }}</div>{% endif %}
+                            </div>
+                        </div>
+
+                        <h5 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                            <i class="bi bi-boxes me-2 text-primary"></i>Daftar Barang Habis Pakai yang Diserahkan
+                        </h5>
+                        <p class="text-muted small mb-3">Hanya barang bertipe CONSUMABLE yang dapat dipilih pada formulir ini.</p>
+
+                        {{ formset.management_form }}
+                        <div class="table-responsive mb-3">
+                            <table class="table table-bordered align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="min-width: 250px;">Nama Barang Habis Pakai</th>
+                                        <th style="width: 140px;">Jumlah</th>
+                                        <th>Catatan Khusus</th>
+                                        <th style="width: 70px;" class="text-center">Hapus</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item_form in formset %}
+                                        <tr>
+                                            <td>
+                                                {{ item_form.id }}
+                                                {{ item_form.item }}
+                                                {% if item_form.item.errors %}<div class="text-danger small mt-1">{{ item_form.item.errors.0 }}</div>{% endif %}
+                                            </td>
+                                            <td>
+                                                {{ item_form.quantity }}
+                                                {% if item_form.quantity.errors %}<div class="text-danger small mt-1">{{ item_form.quantity.errors.0 }}</div>{% endif %}
+                                            </td>
+                                            <td>
+                                                {{ item_form.notes }}
+                                                {% if item_form.notes.errors %}<div class="text-danger small mt-1">{{ item_form.notes.errors.0 }}</div>{% endif %}
+                                            </td>
+                                            <td class="text-center">
+                                                {% if item_form.DELETE %}
+                                                    {{ item_form.DELETE }}
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="alert alert-light border small text-muted mb-4">
+                            <i class="bi bi-info-circle text-primary me-1"></i>
+                            <strong>Aturan Barang Habis Pakai:</strong>
+                            Setelah formulir disimpan, stok barang akan langsung terpotong di gudang dan transaksi ini tidak menghasilkan kewajiban pengembalian.
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+                            <a href="{% url 'consumables:handover_list' %}" class="btn btn-outline-secondary">Batal</a>
+                            <button type="submit" class="btn btn-primary px-4 fw-semibold shadow-sm">
+                                <i class="bi bi-check-lg me-1"></i>Konfirmasi Penyerahan Barang
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
