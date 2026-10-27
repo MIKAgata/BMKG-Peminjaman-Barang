@@ -101,6 +101,12 @@ def loan_apply_view(request):
 
                 messages.success(request, f"Pengajuan peminjaman ({loan.loan_number}) berhasil diajukan dan menunggu persetujuan.")
                 return redirect('loans:loan_detail', pk=loan.pk)
+        else:
+            # Tampilkan pesan error eksplisit agar user tahu pengajuan GAGAL
+            if not form.is_valid():
+                messages.error(request, "Data pengajuan belum lengkap atau tidak valid. Silakan periksa isian formulir.")
+            if not formset.is_valid():
+                messages.error(request, "Data barang yang diminta belum lengkap atau tidak valid. Pastikan tidak ada barang duplikat dan semua kolom wajib terisi.")
     else:
         form = LoanApplyForm()
         formset = LoanItemFormSet()

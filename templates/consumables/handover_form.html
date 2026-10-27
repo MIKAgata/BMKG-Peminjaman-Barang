@@ -50,9 +50,14 @@
                             </div>
                         </div>
 
-                        <h5 class="fw-bold text-dark border-bottom pb-2 mb-3">
-                            <i class="bi bi-boxes me-2 text-primary"></i>Daftar Barang Habis Pakai yang Diserahkan
-                        </h5>
+                        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                            <h5 class="fw-bold text-dark mb-0">
+                                <i class="bi bi-boxes me-2 text-primary"></i>Daftar Barang Habis Pakai yang Diserahkan
+                            </h5>
+                            <button type="button" id="btn-add-row" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-plus-circle me-1"></i>Tambah Barang
+                            </button>
+                        </div>
                         <p class="text-muted small mb-3">Hanya barang bertipe CONSUMABLE yang dapat dipilih pada formulir ini.</p>
 
                         {{ formset.management_form }}
@@ -63,14 +68,17 @@
                                         <th style="min-width: 250px;">Nama Barang Habis Pakai</th>
                                         <th style="width: 140px;">Jumlah</th>
                                         <th>Catatan Khusus</th>
-                                        <th style="width: 70px;" class="text-center">Hapus</th>
+                                        <th style="width: 70px;" class="text-center">Aksi</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="formset-tbody">
                                     {% for item_form in formset %}
-                                        <tr>
+                                        <tr class="formset-row{% if item_form.DELETE.value %} d-none{% endif %}">
                                             <td>
                                                 {{ item_form.id }}
+                                                {% if item_form.DELETE %}
+                                                    <div class="d-none">{{ item_form.DELETE }}</div>
+                                                {% endif %}
                                                 {{ item_form.item }}
                                                 {% if item_form.item.errors %}<div class="text-danger small mt-1">{{ item_form.item.errors.0 }}</div>{% endif %}
                                             </td>
@@ -83,9 +91,9 @@
                                                 {% if item_form.notes.errors %}<div class="text-danger small mt-1">{{ item_form.notes.errors.0 }}</div>{% endif %}
                                             </td>
                                             <td class="text-center">
-                                                {% if item_form.DELETE %}
-                                                    {{ item_form.DELETE }}
-                                                {% endif %}
+                                                <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row" title="Hapus baris ini">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
                                             </td>
                                         </tr>
                                     {% endfor %}
@@ -111,4 +119,103 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tbody = document.getElementById('formset-tbody');
+    const totalFormsInput = document.getElementById('id_items-TOTAL_FORMS');
+    const btnAdd = document.getElementById('btn-add-row');
+
+    function addRow() {
+        const currentTotal = parseInt(totalFormsInput.value, 10);
+        const rows = tbody.querySelectorAll('tr.formset-row');
+
+        if (rows.length === 0) return;
+
+        const lastRow = rows[rows.length - 1];
+        const newRow = lastRow.cloneNode(true);
+
+        newRow.querySelectorAll('input, select, textarea').forEach(function(el) {
+            if (el.name) {
+                el.name = el.name.replace(/-\d+-/, '-' + currentTotal + '-');
+            }
+            if (el.id) {
+                el.id = el.id.replace(/-\d+-/, '-' + currentTotal + '-');
+            }
+
+            if (el.type === 'checkbox') {
+                el.checked = false;
+            } else if (el.tagName === 'SELECT') {
+                el.selectedIndex = 0;
+            } else if (el.type === 'hidden' && el.name.endsWith('-id')) {
+                el.value = '';
+            } else if (el.type === 'number') {
+                el.value = '1';
+            } else {
+                el.value = '';
+            }
+        });
+
+        newRow.querySelectorAll('.text-danger').forEach(function(el) {
+            el.remove();
+        });
+
+        newRow.classList.remove('d-none');
+
+        tbody.appendChild(newRow);
+        totalFormsInput.value = currentTotal + 1;
+
+        attachRemoveHandler(newRow.querySelector('.btn-remove-row'));
+    }
+
+    function removeRow(btn) {
+        const row = btn.closest('tr.formset-row');
+        if (!row) return;
+
+        const idField = row.querySelector('input[type="hidden"][name$="-id"]');
+        const deleteCheckbox = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+        const isExisting = idField && idField.value;
+
+        if (isExisting && deleteCheckbox) {
+            deleteCheckbox.checked = true;
+            row.classList.add('d-none');
+        } else {
+            row.remove();
+            const currentTotal = parseInt(totalFormsInput.value, 10);
+            totalFormsInput.value = Math.max(0, currentTotal - 1);
+            reindexForms();
+        }
+    }
+
+    function reindexForms() {
+        const rows = tbody.querySelectorAll('tr.formset-row');
+        rows.forEach(function(row, idx) {
+            row.querySelectorAll('input, select, textarea').forEach(function(el) {
+                if (el.name) {
+                    el.name = el.name.replace(/-\d+-/, '-' + idx + '-');
+                }
+                if (el.id) {
+                    el.id = el.id.replace(/-\d+-/, '-' + idx + '-');
+                }
+            });
+        });
+        totalFormsInput.value = rows.length;
+    }
+
+    function attachRemoveHandler(btn) {
+        if (!btn) return;
+        btn.addEventListener('click', function() {
+            removeRow(this);
+        });
+    }
+
+    tbody.querySelectorAll('.btn-remove-row').forEach(function(btn) {
+        attachRemoveHandler(btn);
+    });
+
+    btnAdd.addEventListener('click', addRow);
+});
+</script>
 {% endblock %}
