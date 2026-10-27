@@ -1,0 +1,109 @@
+### 1. Status Progres Saat Ini: 100% (Selesai & Terverifikasi)                                                                                          
+                                                                                                                                                          
+  Seluruh tahap pengembangan dari Tahap 0 hingga Tahap 8 telah selesai diimplementasikan, dimigrasikan, dan diverifikasi dengan suite pengujian otomatis. 
+                                                                                                                                                          
+   Modul / Tahap                                      │     Status      │     Progres     │ Verifikasi
+  ────────────────────────────────────────────────────┼─────────────────┼─────────────────┼───────────────────────────────────────────────────────────────
+   Tahap 0: Pemeriksaan Lingkungan & Rencana          │     Selesai     │      100%       │ Dokumen teknis & arsitektur tersusun
+   Tahap 1: Fondasi Proyek, Konfigurasi & Autentikasi │     Selesai     │      100%       │ CustomUser (Admin & Pegawai), Login/Logout, Profil
+   Tahap 2: Master Data Barang, Kategori & Lokasi     │     Selesai     │      100%       │ Isolasi LOANABLE vs CONSUMABLE, StockMovement ledger
+   Tahap 3: Transaksi Peminjaman (LOANABLE)           │     Selesai     │      100%       │ Pengajuan, persetujuan admin, serah terima fisik terpisah
+   Tahap 4: Transaksi Pengembalian & Kondisi Fisik    │     Selesai     │      100%       │ Parsial/penuh, validasi kondisi (USABLE, DAMAGED, LOST)
+   Tahap 5: Penyerahan Habis Pakai (CONSUMABLE)       │     Selesai     │      100%       │ Pengurangan stok langsung tanpa kewajiban kembali
+   Tahap 6: Dashboard Analitik & Modul Laporan        │     Selesai     │      100%       │ Dashboard Admin & Pegawai, ekspor Excel/PDF/CSV, slip cetak
+   Tahap 7: Audit Log, Instansi & Keamanan            │     Selesai     │      100%       │ Proteksi IDOR, AuditLog, halaman error kustom (403, 404, 500)
+   Tahap 8: Verifikasi Akhir, Data Seeder & E2E       │     Selesai     │      100%       │ 55 automated tests (20 mandatory scenarios PRD) lulus
+  ──────                                                                                                                                                  
+  ### 2. Pekerjaan yang Baru Saja Dilanjutkan & Diselesaikan                                                                                              
+  
+  1. Pembuatan Seeder Data Awal (init_data):
+      • Menambahkan command init_data.py.
+      • Telah dieksekusi ke database untuk mengisi:
+          • Profil instansi resmi BMKG (InstitutionSetting).
+          • Master kategori & lokasi penyimpanan inventaris.
+          • 10 item master barang (LOANABLE seperti laptop, proyektor, kamera DSLR, HT; serta CONSUMABLE seperti kertas HVS, pulpen, tinta, baterai).     
+          • Saldo awal dan pergerakan stok pada ledger mutasi.
+          • Contoh transaksi aktif: pengajuan Pending, peminjaman Active (sudah serah terima fisik), peminjaman Completed, dan penyerahan ATK Confirmed.  
+  
+  2. Verifikasi 20 Kriteria Penerimaan Wajib PRD:
+      • Seluruh skenario mandatory pada tests_mandatory_scenarios.py telah diuji dan lulus.
+      • Hasil pengujian: 55 dari 55 pengujian lulus (100% OK) tanpa ada failure maupun error.
+  3. Pembaruan Dokumentasi:
+      • PROGRESS.md diperbarui ke status 100% selesai.
+      • TEST_REPORT.md dan CHANGELOG.md diperbarui dengan log eksekusi pengujian dan catatan rilis versi 1.0.0.
+  
+  ──────
+  ### 3. Kredensial Pengujian & Cara Menjalankan
+  
+  Database lokal (db.sqlite3) sudah terisi data demo dan siap digunakan.
+  
+  Kredensial Login:
+  
+  • Administrator: username = admin | password = admin123
+  • Petugas BMN: username = petugas | password = petugas123
+  • Pegawai 1 (Observasi): username = pegawai_andi | password = pegawai123
+  • Pegawai 2 (Seismologi): username = pegawai_budi | password = pegawai123
+  • Pegawai 3 (Hukum & Org): username = pegawai_citra | password = pegawai123
+
+
+
+### Cara 1: Melalui Antarmuka Web (UI Aplikasi)                                                                                                         
+                                                                                                                                                          
+  #### A. Mengganti Kata Sandi Akun Sendiri (Admin atau Pegawai)                                                                                          
+                                                                                                                                                          
+  Setiap pengguna yang sedang login dapat mengganti kata sandinya sendiri:                                                                                
+                                                                                                                                                          
+  1. Klik nama akun di pojok kanan atas navbar -> pilih Profil Saya (atau buka /accounts/profile/).                                                       
+  2. Klik tombol Ganti Kata Sandi (atau langsung akses /accounts/password-change/ http://127.0.0.1:8000/accounts/password-change/).                       
+  3. Masukkan kata sandi lama dan kata sandi baru.                                                                                                        
+                                                                                                                                                          
+  #### B. Admin Mengubah Kredensial / Reset Kata Sandi Pegawai Lain                                                                                       
+                                                                                                                                                          
+  Administrator memiliki wewenang penuh untuk mengubah username, email, nama, peran, maupun mereset kata sandi pegawai:                                   
+                                                                                                                                                          
+  1. Login sebagai Admin.                                                                                                                                 
+  2. Masuk ke menu sidebar Data Pegawai / Pengguna (URL: /accounts/users/ http://127.0.0.1:8000/accounts/users/).                                         
+  3. Klik tombol Ubah (Ikon Pensil) pada baris akun yang ingin diubah.                                                                                    
+  4. Di formulir pengeditan:                                                                                                                              
+      • Anda dapat mengganti Username, NIP, Unit Kerja, Nama, dsb.                                                                                        
+      • Pada kolom Reset Kata Sandi Baru (Opsional), masukkan kata sandi baru yang diinginkan (kosongkan jika tidak ingin mengubah kata sandi).           
+  5. Klik Simpan Perubahan.                                                                                                                               
+  ──────                                                                                                                                                  
+  ### Cara 2: Melalui Terminal / CLI (Command Line)
+  
+  Jika Anda lupa kata sandi admin atau ingin menggantinya langsung dari server:
+  
+  #### Mengganti Kata Sandi via changepassword:
+  
+  Jalankan perintah berikut di root folder proyek:
+  
+    venv/bin/python manage.py changepassword <username>
+  
+  Contoh untuk akun admin:
+  
+    venv/bin/python manage.py changepassword admin
+  
+  Contoh untuk pegawai:
+  
+    venv/bin/python manage.py changepassword pegawai_andi
+  
+  Sistem akan meminta Anda mengetikkan kata sandi baru secara interaktif.
+  
+  #### Membuat Akun Superuser Baru:
+  
+    venv/bin/python manage.py createsuperuser
+  ──────
+  ### Cara 3: Melalui Django Admin Panel
+  
+  Akses antarmuka bawaan Django di:
+  http://127.0.0.1:8000/admin/accounts/customuser/
+  
+  1. Login dengan akun admin.
+  2. Klik nama pengguna yang bersangkutan.
+  3. Klik tautan formulir kata sandi bawaan Django untuk mengubah kata sandi.
+  ──────
+  ### Cara 4: Mengubah Nilai Default di Script Seeder (init_data)
+  
+  Jika Anda ingin mengubah kredensial bawaan yang di-generate otomatis saat database diinisialisasi ulang, Anda dapat mengedit daftar akun di file:       
+  init_data.py:38-100 pada blok users_data.
+

@@ -134,11 +134,29 @@ class LoanItem(models.Model):
 
     def clean(self):
         super().clean()
-        if self.item.item_type != Item.ItemType.LOANABLE:
-            raise ValidationError({'item': f"Barang '{self.item.name}' bertipe HABIS PAKAI dan tidak boleh dipinjam."})
-        if self.quantity_requested <= 0:
-            raise ValidationError({'quantity_requested': "Jumlah yang diminta harus lebih dari 0."})
 
+        # Jangan validasi jika barang belum dipilih
+        if not self.item_id:
+            return
+
+        # Barang yang dipinjam harus bertipe LOANABLE
+        if self.item.item_type != Item.ItemType.LOANABLE:
+            raise ValidationError({
+                'item': (
+                    f"Barang '{self.item.name}' bertipe HABIS PAKAI "
+                    "dan tidak boleh dipinjam."
+                )
+            })
+
+        # Jumlah yang diminta harus lebih dari nol
+        if (
+            self.quantity_requested is not None
+            and self.quantity_requested <= 0
+        ):
+            raise ValidationError({
+                'quantity_requested': "Jumlah yang diminta harus lebih dari 0."
+            })
+    
     @property
     def quantity_remaining_to_handover(self):
         return max(0, self.quantity_requested - self.quantity_handed_over)
